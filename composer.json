@@ -1,0 +1,20 @@
+{
+	"license": "MIT",
+	"require": {
+		"symfony/class-loader": "2.6.*",
+		"symfony/http-foundation": "2.6.*",
+		"symfony/routing": "2.6.*",
+		"symfony/http-kernel": "2.6.*",
+		"symfony/security": "2.6.*",
+		"twig/twig": "^1.18"
+	},
+	"autoload": {
+	      "classmap": [
+		"src"
+	      ]
+        },
+	"config": {
+		"preferred-install": "dist"
+	},
+	"minimum-stability": "stable"
+}
