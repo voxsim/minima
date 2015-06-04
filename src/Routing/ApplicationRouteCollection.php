@@ -5,5 +5,26 @@ use Symfony\Component\Routing\Route;
 
 class ApplicationRouteCollection extends RouteCollection {
   public function __construct(\Twig_Environment $twig) {
+    $this->add('hello', new route('/hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) { 
+	return 'Hello ' . $name;
+      }
+    )));
+    
+    $this->add('twig_hello', new Route('/twig_hello/{name}', array(
+      'name' => 'World',
+      '_controller' => function ($name) use ($twig) {
+	return $twig->render('hello.twig', array('name' => $name));
+      }
+    )));
+
+    $this->add('rand_hello', new route('/rand_hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) { 
+	return 'Hello ' . $name . ' ' . rand();
+      }
+    )));
+    
   }
 }

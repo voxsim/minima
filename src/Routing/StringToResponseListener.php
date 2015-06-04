@@ -1,4 +1,4 @@
-<?php namespace Routing\Listener;
+<?php namespace Routing;
 
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -9,7 +9,6 @@ class StringToResponseListener implements EventSubscriberInterface
 {
     public function onKernelView(GetResponseForControllerResultEvent $event)
     {
-	$event->getResponse();
 	$response = $event->getControllerResult();
 	if (!$response instanceof Response) {
 	  $event->setResponse(new Response($response));

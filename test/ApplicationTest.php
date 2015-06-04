@@ -9,57 +9,51 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApplicationTest extends \PHPUnit_Framework_TestCase {
+  private $application;
 
-  /**
-   *  @expectedException Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-   */
+  public function __construct() {
+      $configuration = array(
+			    'charset' => 'UTF-8',
+			    'debug' => false,
+			    'twig.path' => __DIR__.'/views',
+			    'cache.path' =>  __DIR__.'/cache',
+			    'cache.page' => 10
+			   );
+      $this->application = new Application($configuration);
+  }
+
   public function testNotFoundHandling()
   {
-      $dispatcher = new EventDispatcher();
-      $routes = new RouteCollection();
-      $application = new Application($routes, $dispatcher, false);
+      $response = $this->application->handle(new Request());
 
-      $response = $application->handle(new Request());
-
-      $this->assertEquals(404, $response->getStatusCode());
+      $this->assertEquals('Something went wrong! (No route found for "GET /")', $response->getContent());
   }
   
   public function testRoute()
   {
       $request = Request::create('/hello/Simon');
 
-      $dispatcher = new EventDispatcher();
-      $routes = new RouteCollection();
-      $routes->add('hello', new Route('/hello/{name}', array(
-	'name' => 'World',
-	'_controller' => function($name) { 
-	  return 'Hello ' . $name;
-	}
-      )));
-      $application = new Application($routes, $dispatcher, false);
-
-      $response = $application->handle($request);
+      $response = $this->application->handle($request);
 
       $this->assertEquals('Hello Simon', $response->getContent());
   }
 
-  public function testRouteAndTwig()
+  public function testTwig()
   {
-      $request = Request::create('/hello/Simon');
+      $request = Request::create('/twig_hello/Simon');
 
-      $twig = new \Twig(array('twig.path' => __DIR__.'/views'));
-      $dispatcher = new EventDispatcher();
-      $routes = new RouteCollection();
-      $routes->add('hello', new Route('/hello/{name}', array(
-	'name' => 'World',
-	'_controller' => function ($name) use ($twig) {
-	  return $twig->render('hello.twig', array('name' => $name));
-	}
-      )));
-      $application = new Application($routes, $dispatcher, false);
-
-      $response = $application->handle($request);
+      $response = $this->application->handle($request);
 
       $this->assertEquals('Hello Simon' . "\n", $response->getContent());
+  }
+  
+  public function testCaching()
+  {
+      $request = Request::create('/rand_hello/Simon');
+
+      $response1 = $this->application->handle($request);
+      $response2 = $this->application->handle($request);
+
+      $this->assertEquals($response1->getContent(), $response2->getContent());
   }
 }
