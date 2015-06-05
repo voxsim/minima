@@ -1,1 +1,5 @@
+- logging
+- database
+- manage users
+- manage sessions
 - filtering on routing

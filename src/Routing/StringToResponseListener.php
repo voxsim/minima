@@ -1,4 +1,4 @@
-<?php namespace Routing;
+<?php namespace Minima\Routing;
 
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\KernelEvents;

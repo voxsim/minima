@@ -1,20 +1,12 @@
 <?php
 
 require_once __DIR__.'/vendor/autoload.php';
- 
-use Symfony\Component\HttpFoundation\Request;
 
-$configuration = array(
-  'charset' => 'UTF-8',
-  'debug' => true,
-  'twig.path' => __DIR__.'/views',
-  'cache.path' =>  __DIR__.'/cache',
-  'cache.page' => 10
-);
+use Symfony\Component\HttpFoundation\Request;
 
 $request = Request::createFromGlobals();
 
-$application = new Application($configuration);
+$application = new Minima\Application();
 
 $response = $application->handle($request);
 $response->send();

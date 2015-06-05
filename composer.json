@@ -6,7 +6,9 @@
 		"symfony/routing": "2.6.*",
 		"symfony/http-kernel": "2.6.*",
 		"symfony/security": "2.6.*",
-		"twig/twig": "^1.18"
+		"twig/twig": "^1.18",
+		"monolog/monolog": "^1.13",
+		"doctrine/dbal": "^2.5"
 	},
 	"autoload": {
 	      "classmap": [

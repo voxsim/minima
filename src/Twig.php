@@ -1,4 +1,4 @@
-<?php
+<?php namespace Minima;
 
 class Twig extends \Twig_Environment {
   public function __construct($configuration) {

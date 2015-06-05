@@ -1,4 +1,4 @@
-<?php namespace Cache;
+<?php namespace Minima\Cache;
 
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;

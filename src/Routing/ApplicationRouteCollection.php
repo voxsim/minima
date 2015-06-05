@@ -1,4 +1,4 @@
-<?php namespace Routing;
+<?php namespace Minima\Routing;
 
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;

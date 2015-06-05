@@ -8,18 +8,12 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class ApplicationTest extends \PHPUnit_Framework_TestCase {
+class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
   private $application;
 
-  public function __construct() {
-      $configuration = array(
-			    'charset' => 'UTF-8',
-			    'debug' => false,
-			    'twig.path' => __DIR__.'/views',
-			    'cache.path' =>  __DIR__.'/cache',
-			    'cache.page' => 10
-			   );
-      $this->application = new Application($configuration);
+  public function __construct()
+  {
+      $this->application = $this->createApplication();
   }
 
   public function testNotFoundHandling()
@@ -55,5 +49,14 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase {
       $response2 = $this->application->handle($request);
 
       $this->assertEquals($response1->getContent(), $response2->getContent());
+  }
+
+  private function createApplication()
+  {
+    $testConfiguration = array(
+			  'twig.path' => __DIR__.'/views',
+			  'cache.path' =>  __DIR__.'/cache',
+			);
+    return new \Minima\Application($testConfiguration);
   }
 }
