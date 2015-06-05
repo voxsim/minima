@@ -8,7 +8,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
+class ApplicationIntegrationDebugTest extends \PHPUnit_Framework_TestCase {
   private $application;
 
   public function __construct()
@@ -18,9 +18,12 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 
   public function testNotFoundHandling()
   {
-    $response = $this->application->handle(new Request());
-
-    $this->assertEquals('Something went wrong! (No route found for "GET /")', $response->getContent());
+    try {
+      $response = $this->application->handle(new Request());
+      throw new \RuntimeException("Application, in debug mode, should throw NotFoundHttpException");
+    } catch(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
+      $this->assertTrue(true);
+    }
   }
   
   public function testRoute()
@@ -48,12 +51,13 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
     $response1 = $this->application->handle($request);
     $response2 = $this->application->handle($request);
 
-    $this->assertEquals($response1->getContent(), $response2->getContent());
+    $this->assertNotEquals($response1->getContent(), $response2->getContent());
   }
 
   private function createApplication()
   {
     $testConfiguration = array(
+			  'debug' => true,
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
 			);

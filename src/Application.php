@@ -11,49 +11,49 @@ use Symfony\Component\HttpFoundation\Request;
  
 class Application implements HttpKernelInterface 
 {
-    private $configuration;
-    private $httpKernel;
+  private $configuration;
+  private $httpKernel;
 
-    public function __construct(array $configuration = array())
-    {
-	$defaultConfiguration = array(
-				  'charset' => 'UTF-8',
-				  'debug' => false,
-				  'twig.path' => __DIR__.'/../views',
-				  'cache.path' =>  __DIR__.'/../cache',
-				  'cache.page' => 10
-				);
-	$this->configuration = array_merge($defaultConfiguration, $configuration);
+  public function __construct(array $configuration = array())
+  {
+    $defaultConfiguration = array(
+			      'charset' => 'UTF-8',
+			      'debug' => false,
+			      'twig.path' => __DIR__.'/../views',
+			      'cache.path' =>  __DIR__.'/../cache',
+			      'cache.page' => 10
+			    );
+    $this->configuration = array_merge($defaultConfiguration, $configuration);
 
-	$twig = new \Minima\Twig($this->configuration);
-	$routes = new \Minima\Routing\ApplicationRouteCollection($twig);
+    $twig = new \Minima\Twig($this->configuration);
+    $routes = new \Minima\Routing\ApplicationRouteCollection($twig);
 
-        $context = new Routing\RequestContext();
-        $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
-        $resolver = new HttpKernel\Controller\ControllerResolver();
- 
-	$dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
-        $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
-        $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
+    $context = new Routing\RequestContext();
+    $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
+    $resolver = new HttpKernel\Controller\ControllerResolver();
 
-        $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
+    $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
+    $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
 
-	if(!$this->configuration['debug']) {
-	  $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
-	      $msg = 'Something went wrong! ('.$exception->getMessage().')';
-	   
-	      return new Response($msg, $exception->getStatusCode());
-	  };
-	  $dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
+    $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
 
-	  $this->httpKernel = new HttpCache($this->httpKernel, new Store($this->configuration['cache.path']));
-          $dispatcher->addSubscriber(new \Minima\Cache\SetTtlListener($this->configuration['cache.page']));
-	}
+    if(!$this->configuration['debug']) {
+      $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
+	$msg = 'Something went wrong! ('.$exception->getMessage().')';
+     
+	return new Response($msg, $exception->getStatusCode());
+      };
+      $dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
+
+      $this->httpKernel = new HttpCache($this->httpKernel, new Store($this->configuration['cache.path']));
+      $dispatcher->addSubscriber(new \Minima\Cache\SetTtlListener($this->configuration['cache.page']));
     }
- 
-    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
-    {
-	return $this->httpKernel->handle($request, $type, $catch);
-    }
+  }
+
+  public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+  {
+    return $this->httpKernel->handle($request, $type, $catch);
+  }
 }
