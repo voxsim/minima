@@ -9,9 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
  
 class Application extends ApplicationDebug 
 {
-  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Logging\Logger $logger)
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver)
   {
-    parent::__construct($configuration, $dispatcher, $resolver, $logger);
+    $defaultConfiguration = array(
+			      'cache.path' =>  __DIR__.'/../cache',
+			      'cache.page' => 10,
+			    );
+    $configuration = array_merge($defaultConfiguration, $configuration);
+
+    parent::__construct($configuration, $dispatcher, $resolver);
 
     $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
       $msg = 'Something went wrong! ('.$exception->getMessage().')';

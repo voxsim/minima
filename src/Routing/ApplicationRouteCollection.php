@@ -4,7 +4,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
 
 class ApplicationRouteCollection extends RouteCollection {
-  public function __construct(\Twig_Environment $twig) {
+  public function __construct($configuration) {
     $this->add('hello', new route('/hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
@@ -14,7 +14,8 @@ class ApplicationRouteCollection extends RouteCollection {
     
     $this->add('twig_hello', new Route('/twig_hello/{name}', array(
       'name' => 'World',
-      '_controller' => function ($name) use ($twig) {
+      '_controller' => function ($name) use($configuration) {
+	$twig = \Minima\Twig::create($configuration);
 	return $twig->render('hello.twig', array('name' => $name));
       }
     )));
