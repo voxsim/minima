@@ -1,3 +1,4 @@
+minima.log
 vendor/*
 cache/*
 test/cache/*

@@ -8,6 +8,10 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Silex\EventListener\LogListener;
  
 class Application implements HttpKernelInterface 
 {
@@ -21,7 +25,9 @@ class Application implements HttpKernelInterface
 			      'debug' => false,
 			      'twig.path' => __DIR__.'/../views',
 			      'cache.path' =>  __DIR__.'/../cache',
-			      'cache.page' => 10
+			      'cache.page' => 10,
+			      'log.name' => 'minima',
+			      'log.file' => __DIR__ . '/../minima.log'
 			    );
     $this->configuration = array_merge($defaultConfiguration, $configuration);
 
@@ -37,6 +43,16 @@ class Application implements HttpKernelInterface
     $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
     $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
 
+    $loggerLevel = Logger::DEBUG;
+    $loggerFormatter = new LineFormatter();
+    $loggerHandler = new StreamHandler($this->configuration['log.file'], $loggerLevel, false);
+    $loggerHandler->setFormatter($loggerFormatter);
+
+    $logger = new Logger($this->configuration['log.name']);
+    $logger->pushHandler($loggerHandler);
+
+    $dispatcher->addSubscriber(new LogListener($logger, null));
+ 
     $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
 
     if(!$this->configuration['debug']) {
