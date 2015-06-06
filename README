@@ -9,8 +9,8 @@ I will try to refactoring the core to use a proper dependency injection to make 
 
 Secondly, I don't like the HttpKernel design because it does nothing without a little help:
 * Its role is to transform a request to a response
-* It has two dependency: the event dispatcher and the controller resolver
-* When the HttpKernel handles the request, it will dispatch some events that permits *magically* to populate the request attributes in order to permit the controller resolver to instantiate the right controller and transform the request in the response
+* It has two dependencies: the event dispatcher and the controller resolver
+* When the HttpKernel handles the request, it will dispatch some events that permits *magically* to populate the request attributes that they will be used by the controller resolver in order to instantiate the right controller and transform the request in the response
 * This magic is possible thanks to the RouteListener that
   * match the right route for the request
   * sets the controller and its arguments in the request
