@@ -34,7 +34,7 @@ class ApplicationDebug implements HttpKernelInterface
     $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
     $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
     $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
-    $dispatcher->addSubscriber(new \Minima\LogListener(new \Minima\Logger($this->configuration)));
+    $dispatcher->addSubscriber(new \Minima\Logging\LogListener(new \Minima\Logging\Logger($this->configuration)));
  
     $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
   }

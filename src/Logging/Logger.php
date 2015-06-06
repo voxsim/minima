@@ -1,4 +1,4 @@
-<?php namespace Minima;
+<?php namespace Minima\Logging;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;

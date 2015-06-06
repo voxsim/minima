@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Minima;
+namespace Minima\Logging;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
