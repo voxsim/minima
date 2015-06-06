@@ -1,10 +1,9 @@
 <?php namespace Minima;
 
+use Minima\Logging\Logger;
+use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
-use Symfony\Component\Routing;
-use Symfony\Component\HttpKernel;
-use \Minima\Logging\Logger;
 
 class ApplicationFactory {
   public static function build($configuration = array()) {
@@ -14,16 +13,12 @@ class ApplicationFactory {
 			      'log.file' => __DIR__ . '/../minima.log'
 			    );
     $configuration = array_merge($defaultConfiguration, $configuration);
-    $dispatcher = new EventDispatcher();
-    $resolver = new ControllerResolver();
 
-    $logger = new Logger($configuration);
-    $dispatcher->addSubscriber(new \Minima\Logging\LogListener(new \Minima\Logging\Logger($configuration)));
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addSubscriber(new Router($configuration));
+    $dispatcher->addSubscriber(new Logger($configuration));
     
-    $routes = new \Minima\Routing\ApplicationRouteCollection($configuration);
-    $context = new Routing\RequestContext();
-    $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
-    $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
+    $resolver = new ControllerResolver();
 
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver);

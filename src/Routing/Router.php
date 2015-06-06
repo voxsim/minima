@@ -2,17 +2,21 @@
 
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\HttpKernel\EventListener\RouterListener;
 
-class ApplicationRouteCollection extends RouteCollection {
+class Router extends RouterListener {
   public function __construct($configuration) {
-    $this->add('hello', new route('/hello/{name}', array(
+    $routeCollection = new RouteCollection();
+    $routeCollection->add('hello', new route('/hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
 	return 'Hello ' . $name;
       }
     )));
     
-    $this->add('twig_hello', new Route('/twig_hello/{name}', array(
+    $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
       'name' => 'World',
       '_controller' => function ($name) use($configuration) {
 	$twig = \Minima\Twig::create($configuration);
@@ -20,11 +24,15 @@ class ApplicationRouteCollection extends RouteCollection {
       }
     )));
 
-    $this->add('rand_hello', new route('/rand_hello/{name}', array(
+    $routeCollection->add('rand_hello', new route('/rand_hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
 	return 'Hello ' . $name . ' ' . rand();
       }
     )));
+
+    $context = new RequestContext();
+    $matcher = new UrlMatcher($routeCollection, $context);
+    parent::__construct($matcher);
   }
 }
