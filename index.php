@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 $request = Request::createFromGlobals();
 
-$application = new Minima\Application();
+$application = Minima\ApplicationFactory::build();
 
 $response = $application->handle($request);
 $response->send();

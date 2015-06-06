@@ -1,75 +1,26 @@
 <?php namespace Minima;
 
-use Symfony\Component\Routing;
 use Symfony\Component\HttpKernel;
+use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 use Symfony\Component\HttpKernel\HttpCache\Store;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
-use Silex\EventListener\LogListener;
  
-class Application implements HttpKernelInterface 
+class Application extends ApplicationDebug 
 {
-  private $configuration;
-  private $httpKernel;
-
-  public function __construct(array $configuration = array())
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver)
   {
-    $defaultConfiguration = array(
-			      'charset' => 'UTF-8',
-			      'debug' => false,
-			      'twig.path' => __DIR__.'/../views',
-			      'cache.path' =>  __DIR__.'/../cache',
-			      'cache.page' => 10,
-			      'log.name' => 'minima',
-			      'log.file' => __DIR__ . '/../minima.log'
-			    );
-    $this->configuration = array_merge($defaultConfiguration, $configuration);
+    parent::__construct($configuration, $dispatcher, $resolver);
 
-    $twig = new \Minima\Twig($this->configuration);
-    $routes = new \Minima\Routing\ApplicationRouteCollection($twig);
+    $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
+      $msg = 'Something went wrong! ('.$exception->getMessage().')';
+   
+      return new Response($msg, $exception->getStatusCode());
+    };
+    $dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
 
-    $context = new Routing\RequestContext();
-    $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
-    $resolver = new HttpKernel\Controller\ControllerResolver();
-
-    $dispatcher = new EventDispatcher();
-    $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
-    $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher));
-    $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
-
-    $loggerLevel = Logger::DEBUG;
-    $loggerFormatter = new LineFormatter();
-    $loggerHandler = new StreamHandler($this->configuration['log.file'], $loggerLevel, false);
-    $loggerHandler->setFormatter($loggerFormatter);
-
-    $logger = new Logger($this->configuration['log.name']);
-    $logger->pushHandler($loggerHandler);
-
-    $dispatcher->addSubscriber(new LogListener($logger, null));
- 
-    $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
-
-    if(!$this->configuration['debug']) {
-      $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
-	$msg = 'Something went wrong! ('.$exception->getMessage().')';
-     
-	return new Response($msg, $exception->getStatusCode());
-      };
-      $dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
-
-      $this->httpKernel = new HttpCache($this->httpKernel, new Store($this->configuration['cache.path']));
-      $dispatcher->addSubscriber(new \Minima\Cache\SetTtlListener($this->configuration['cache.page']));
-    }
-  }
-
-  public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
-  {
-    return $this->httpKernel->handle($request, $type, $catch);
+    $this->httpKernel = new HttpCache($this->httpKernel, new Store($this->configuration['cache.path']));
+    $dispatcher->addSubscriber(new \Minima\Cache\SetTtlListener($this->configuration['cache.page']));
   }
 }

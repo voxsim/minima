@@ -57,6 +57,6 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
 			);
-    return new \Minima\Application($testConfiguration);
+    return \Minima\ApplicationFactory::buildForProduction($testConfiguration);
   }
 }

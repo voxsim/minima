@@ -8,7 +8,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class ApplicationIntegrationDebugTest extends \PHPUnit_Framework_TestCase {
+class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
   private $application;
 
   public function __construct()
@@ -57,10 +57,9 @@ class ApplicationIntegrationDebugTest extends \PHPUnit_Framework_TestCase {
   private function createApplication()
   {
     $testConfiguration = array(
-			  'debug' => true,
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
 			);
-    return new \Minima\Application($testConfiguration);
+    return \Minima\ApplicationFactory::buildForDebug($testConfiguration);
   }
 }
