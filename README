@@ -1,0 +1,32 @@
+This is an experiment after reading this wondeful series on how create your own framework [1].
+
+Firstly, I built everything as Fabien described, but I really don't like the Application.php [2] in Silex, because everything is istantiated as global variable.
+After digging, I found that Silex is on top of Pimple [3] and it seems more like a Service Locator [4] than a "Dependency Injection Container".
+
+If you use a global variable, remember that it's always a dependency and it will make your code untastable and heavy to change. This code is usually called legacy code.
+
+I will try to refactoring the core to use a proper dependency injection to make the code testable [5][6][7][8].
+
+Secondly, I don't like the HttpKernel design because it does nothing without a little help:
+* Its role is to transform a request to a response
+* It has two dependency: the event dispatcher and the controller resolver
+* When the HttpKernel handles the request, it will dispatch some events that permits *magically* to populate the request attributes in order to permit the controller resolver to instantiate the right controller and transform the request in the response
+* This magic is possible thanks to the RouteListener that
+  * match the right route for the request
+  * sets the controller and its arguments in the request
+
+I will create my own framework keeping in mind TDD and the SOLID PRINCIPLES and we will see what we will have :)
+I want to remember that this is my personal point of view.
+
+bye,
+voxsim
+
+References
+[1] http://fabien.potencier.org/article/50/create-your-own-framework-on-top-of-the-symfony2-components-part-1
+[2] https://github.com/fabpot/Silex/blob/master/src/Silex/Application.php#L67
+[3] http://pimple.sensiolabs.org/
+[4] http://martinfowler.com/articles/injection.html
+[5] http://cleancoders.com/
+[6] http://www.jbrains.ca/training/the-worlds-best-introduction-to-test-driven-development
+[7] https://www.youtube.com/playlist?list=PLD0011D00849E1B79
+[8] http://codurance.com/videos/
