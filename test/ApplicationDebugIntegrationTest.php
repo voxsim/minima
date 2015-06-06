@@ -57,9 +57,10 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
   private function createApplication()
   {
     $testConfiguration = array(
+			  'debug' => true,
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
 			);
-    return \Minima\ApplicationFactory::buildForDebug($testConfiguration);
+    return \Minima\ApplicationFactory::build($testConfiguration);
   }
 }

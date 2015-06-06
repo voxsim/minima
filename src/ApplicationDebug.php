@@ -11,19 +11,13 @@ class ApplicationDebug implements HttpKernelInterface
 {
   protected $configuration;
   protected $httpKernel;
+  protected $logger;
 
-  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver)
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Logging\Logger $logger)
   {
-    $defaultConfiguration = array(
-			      'charset' => 'UTF-8',
-			      'debug' => false,
-			      'twig.path' => __DIR__.'/../views',
-			      'cache.path' =>  __DIR__.'/../cache',
-			      'cache.page' => 10,
-			      'log.level' => 'debug',
-			      'log.file' => __DIR__ . '/../minima.log'
-			    );
-    $this->configuration = array_merge($defaultConfiguration, $configuration);
+    $this->logger = $logger;
+    $this->configuration = $configuration;
+    $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
 
     $twig = new \Minima\Twig($this->configuration);
     $routes = new \Minima\Routing\ApplicationRouteCollection($twig);
@@ -36,7 +30,7 @@ class ApplicationDebug implements HttpKernelInterface
     $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
     $dispatcher->addSubscriber(new \Minima\Logging\LogListener(new \Minima\Logging\Logger($this->configuration)));
  
-    $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
+    $this->logger->info('> Application built');
   }
 
   public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)

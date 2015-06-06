@@ -25,6 +25,5 @@ class ApplicationRouteCollection extends RouteCollection {
 	return 'Hello ' . $name . ' ' . rand();
       }
     )));
-    
   }
 }

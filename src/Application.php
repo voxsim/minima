@@ -9,9 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
  
 class Application extends ApplicationDebug 
 {
-  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver)
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Logging\Logger $logger)
   {
-    parent::__construct($configuration, $dispatcher, $resolver);
+    parent::__construct($configuration, $dispatcher, $resolver, $logger);
 
     $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
       $msg = 'Something went wrong! ('.$exception->getMessage().')';
