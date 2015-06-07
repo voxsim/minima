@@ -1,15 +1,18 @@
 <?php namespace Minima;
 
-use Symfony\Component\HttpKernel;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 use Symfony\Component\HttpKernel\HttpCache\Store;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\EventListener\ExceptionListener;
+use Symfony\Component\HttpKernel\Exception\FlattenException;
  
 class Application extends ApplicationDebug 
 {
-  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver)
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Routing\Router $router)
   {
     $defaultConfiguration = array(
 			      'cache.path' =>  __DIR__.'/../cache',
@@ -17,16 +20,21 @@ class Application extends ApplicationDebug
 			    );
     $configuration = array_merge($defaultConfiguration, $configuration);
 
-    parent::__construct($configuration, $dispatcher, $resolver);
+    parent::__construct($configuration, $dispatcher, $resolver, $router);
 
-    $errorHandler = function (HttpKernel\Exception\FlattenException $exception) {
+    $errorHandler = function (FlattenException $exception) {
       $msg = 'Something went wrong! ('.$exception->getMessage().')';
    
       return new Response($msg, $exception->getStatusCode());
     };
-    $dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
+    $dispatcher->addSubscriber(new ExceptionListener($errorHandler));
 
     $this->httpKernel = new HttpCache($this->httpKernel, new Store($this->configuration['cache.path']));
     $dispatcher->addSubscriber(new \Minima\Cache\SetTtlListener($this->configuration['cache.page']));
+  }
+
+  public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+  {
+    return $this->httpKernel->handle($request, $type, $catch);
   }
 }

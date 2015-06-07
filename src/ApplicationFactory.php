@@ -15,22 +15,22 @@ class ApplicationFactory {
     $configuration = array_merge($defaultConfiguration, $configuration);
 
     $dispatcher = new EventDispatcher();
-    $dispatcher->addSubscriber(new Router($configuration));
     $dispatcher->addSubscriber(new Logger($configuration));
     
     $resolver = new ControllerResolver();
+    $router = new Router($configuration);
 
     if(isset($configuration['debug']) && $configuration['debug'])
-      return static::buildForDebug($configuration, $dispatcher, $resolver);
+      return static::buildForDebug($configuration, $dispatcher, $resolver, $router);
 
-    return static::buildForProduction($configuration, $dispatcher, $resolver);
+    return static::buildForProduction($configuration, $dispatcher, $resolver, $router);
   }
 
-  private static function buildForProduction($configuration, $dispatcher, $resolver) {
-    return new Application($configuration, $dispatcher, $resolver);
+  private static function buildForProduction($configuration, $dispatcher, $resolver, $router) {
+    return new Application($configuration, $dispatcher, $resolver, $router);
   }
 
-  private static function buildForDebug($configuration, $dispatcher, $resolver) {
-    return new ApplicationDebug($configuration, $dispatcher, $resolver);
+  private static function buildForDebug($configuration, $dispatcher, $resolver, $router) {
+    return new ApplicationDebug($configuration, $dispatcher, $resolver, $router);
   }
 }

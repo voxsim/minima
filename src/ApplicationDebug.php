@@ -6,18 +6,18 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Controller\ControllerResolverInterface;
 use Symfony\Component\HttpFoundation\Request;
  
-class ApplicationDebug implements HttpKernelInterface 
+class ApplicationDebug 
 {
   protected $configuration;
   protected $httpKernel;
 
-  public function __construct(array $configuration, EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver)
+  public function __construct(array $configuration, EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, \Minima\Routing\Router $router)
   {
     $defaultConfiguration = array('charset' => 'UTF-8');
     $configuration = array_merge($defaultConfiguration, $configuration);
 
     $this->configuration = $configuration;
-    $this->httpKernel = new HttpKernel\HttpKernel($dispatcher, $resolver);
+    $this->httpKernel = new \Minima\HttpKernel($dispatcher, $resolver, null, $router);
 
     $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
     $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
