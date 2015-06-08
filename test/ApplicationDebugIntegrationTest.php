@@ -4,6 +4,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 use Minima\Logging\Logger;
 use Minima\Routing\Router;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -13,10 +14,13 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 
 class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
   private $application;
+  private $logger;
 
   public function __construct()
   {
-    $this->application = $this->createApplication();
+    $this->logger = new TestLogger();
+
+    $this->application = $this->createApplication($this->logger);
   }
 
   public function testNotFoundHandling()
@@ -56,8 +60,20 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
 
     $this->assertNotEquals($response1->getContent(), $response2->getContent());
   }
+  
+  public function testLogging()
+  {
+    $request = Request::create('/log_hello/Simon');
 
-  private function createApplication()
+    $this->application->handle($request);
+    $messages = $this->logger->getMessages();
+
+    $this->assertEquals('> GET /log_hello/Simon', $messages[0][1]);
+    $this->assertEquals('Matched route "log_hello" (parameters: "name": "Simon", "_controller": "{}", "_route": "log_hello")', $messages[1][1]);
+    $this->assertEquals('Message from controller', $messages[2][1]);
+  }
+
+  private function createApplication(LoggerInterface $logger)
   {
     $configuration = array(
 			  'twig.path' => __DIR__.'/views',
@@ -65,13 +81,8 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
 			);
 
     $dispatcher = new EventDispatcher();
-
-    $logger = Logger::build($configuration);
-
     $router = new Router($configuration, $logger);
-    
     $resolver = new ControllerResolver($logger);
-    
     return new \Minima\ApplicationDebug($configuration, $dispatcher, $resolver, $router, $logger);
   }
 }

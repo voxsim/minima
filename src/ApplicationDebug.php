@@ -2,6 +2,7 @@
 
 use Minima\Logging\LogListener;
 use Minima\Routing\StringToResponseListener;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -13,7 +14,7 @@ class ApplicationDebug
   protected $configuration;
   protected $httpKernel;
 
-  public function __construct(array $configuration, EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, \Minima\Routing\Router $router)
+  public function __construct(array $configuration, EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, \Minima\Routing\Router $router, LoggerInterface $logger)
   {
     $defaultConfiguration = array('charset' => 'UTF-8');
     $configuration = array_merge($defaultConfiguration, $configuration);

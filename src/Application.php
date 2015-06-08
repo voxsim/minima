@@ -1,5 +1,6 @@
 <?php namespace Minima;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 use Symfony\Component\HttpKernel\HttpCache\Store;
@@ -12,7 +13,7 @@ use Symfony\Component\HttpKernel\Exception\FlattenException;
  
 class Application extends ApplicationDebug 
 {
-  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Routing\Router $router)
+  public function __construct(array $configuration, EventDispatcher $dispatcher, ControllerResolver $resolver, \Minima\Routing\Router $router, LoggerInterface $logger)
   {
     $defaultConfiguration = array(
 			      'cache.path' =>  __DIR__.'/../cache',
@@ -20,7 +21,7 @@ class Application extends ApplicationDebug
 			    );
     $configuration = array_merge($defaultConfiguration, $configuration);
 
-    parent::__construct($configuration, $dispatcher, $resolver, $router);
+    parent::__construct($configuration, $dispatcher, $resolver, $router, $logger);
 
     $errorHandler = function (FlattenException $exception) {
       $msg = 'Something went wrong! ('.$exception->getMessage().')';
