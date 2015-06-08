@@ -1,4 +1,4 @@
-- controllers/action for each test
+- EventDispatcher seems to do too much
 - database
 - manage users
 - manage sessions

@@ -4,9 +4,10 @@ use Minima\Logging\Logger;
 use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+use Symfony\Component\Routing\RouteCollection;
 
 class ApplicationFactory {
-  public static function build($configuration = array()) {
+  public static function build(EventDispatcher $dispatcher, RouteCollection $routeCollection, $configuration = array()) {
     $defaultConfiguration = array(
 			      'debug' => false,
 			    );
@@ -14,9 +15,7 @@ class ApplicationFactory {
     
     $logger = Logger::build($configuration);
     
-    $dispatcher = new EventDispatcher();
-
-    $router = new Router($configuration, $logger);
+    $router = new Router($configuration, $routeCollection, $logger);
     
     $resolver = new ControllerResolver($logger);
 
