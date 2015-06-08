@@ -21,16 +21,16 @@ class ApplicationFactory {
     $resolver = new ControllerResolver($logger);
 
     if(isset($configuration['debug']) && $configuration['debug'])
-      return static::buildForDebug($configuration, $dispatcher, $resolver, $router);
+      return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
-    return static::buildForProduction($configuration, $dispatcher, $resolver, $router);
+    return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger);
   }
 
-  private static function buildForProduction($configuration, $dispatcher, $resolver, $router) {
-    return new Application($configuration, $dispatcher, $resolver, $router);
+  private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger) {
+    return new Application($configuration, $dispatcher, $resolver, $router, $logger);
   }
 
-  private static function buildForDebug($configuration, $dispatcher, $resolver, $router) {
-    return new ApplicationDebug($configuration, $dispatcher, $resolver, $router);
+  private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger) {
+    return new ApplicationDebug($configuration, $dispatcher, $resolver, $router, $logger);
   }
 }
