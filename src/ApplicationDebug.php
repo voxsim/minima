@@ -1,5 +1,7 @@
 <?php namespace Minima;
 
+use Minima\Logging\LogListener;
+use Minima\Routing\StringToResponseListener;
 use Symfony\Component\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -19,8 +21,9 @@ class ApplicationDebug
     $this->configuration = $configuration;
     $this->httpKernel = new \Minima\HttpKernel($dispatcher, $resolver, null, $router);
 
+    $dispatcher->addSubscriber(new LogListener($logger));
     $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
-    $dispatcher->addSubscriber(new \Minima\Routing\StringToResponseListener);
+    $dispatcher->addSubscriber(new StringToResponseListener);
   }
 
   public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)

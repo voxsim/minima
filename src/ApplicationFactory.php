@@ -1,7 +1,6 @@
 <?php namespace Minima;
 
 use Minima\Logging\Logger;
-use Minima\Logging\LogListener;
 use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
@@ -16,7 +15,6 @@ class ApplicationFactory {
     $logger = Logger::build($configuration);
     
     $dispatcher = new EventDispatcher();
-    $dispatcher->addSubscriber(new LogListener($logger));
 
     $router = new Router($configuration, $logger);
     

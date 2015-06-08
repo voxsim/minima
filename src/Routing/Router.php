@@ -16,6 +16,7 @@ class Router {
 
   public function __construct($configuration, LoggerInterface $logger = null) {
     $routeCollection = new RouteCollection();
+
     $routeCollection->add('hello', new route('/hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
@@ -35,6 +36,13 @@ class Router {
       'name' => 'world',
       '_controller' => function($name) { 
 	return 'Hello ' . $name . ' ' . rand();
+      }
+    )));
+
+    $routeCollection->add('log_hello', new route('/log_hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) use($logger) {
+        $logger->info('Message from controller'); 
       }
     )));
 

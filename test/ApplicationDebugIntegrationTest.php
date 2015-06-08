@@ -2,11 +2,14 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+use Minima\Logging\Logger;
+use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 
 class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
   private $application;
@@ -56,11 +59,19 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
 
   private function createApplication()
   {
-    $testConfiguration = array(
-			  'debug' => true,
+    $configuration = array(
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
 			);
-    return \Minima\ApplicationFactory::build($testConfiguration);
+
+    $dispatcher = new EventDispatcher();
+
+    $logger = Logger::build($configuration);
+
+    $router = new Router($configuration, $logger);
+    
+    $resolver = new ControllerResolver($logger);
+    
+    return new \Minima\ApplicationDebug($configuration, $dispatcher, $resolver, $router, $logger);
   }
 }
