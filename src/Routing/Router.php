@@ -1,5 +1,6 @@
 <?php namespace Minima\Routing;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RequestContext;
@@ -77,5 +78,15 @@ class Router {
 
 	throw new MethodNotAllowedHttpException($e->getAllowedMethods(), $message, $e);
     }
+  }
+
+  private function parametersToString(array $parameters)
+  {
+      $pieces = array();
+      foreach ($parameters as $key => $val) {
+	  $pieces[] = sprintf('"%s": "%s"', $key, (is_string($val) ? $val : json_encode($val)));
+      }
+
+      return implode(', ', $pieces);
   }
 }
