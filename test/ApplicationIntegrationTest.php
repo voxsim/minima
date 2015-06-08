@@ -78,8 +78,43 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 			);
 
     $dispatcher = new EventDispatcher();
-    $router = new Router($configuration, $logger);
+    $router = $this->createRouter($configuration, $logger);
     $resolver = new ControllerResolver($logger);
     return new \Minima\Application($configuration, $dispatcher, $resolver, $router, $logger);
+  }
+
+  public function createRouter($configuration, $logger) {
+    $routeCollection = new RouteCollection();
+
+    $routeCollection->add('hello', new route('/hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) { 
+	return 'Hello ' . $name;
+      }
+    )));
+    
+    $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
+      'name' => 'World',
+      '_controller' => function ($name) use($configuration) {
+	$twig = \Minima\Twig::create($configuration);
+	return $twig->render('hello.twig', array('name' => $name));
+      }
+    )));
+
+    $routeCollection->add('rand_hello', new route('/rand_hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) { 
+	return 'Hello ' . $name . ' ' . rand();
+      }
+    )));
+
+    $routeCollection->add('log_hello', new route('/log_hello/{name}', array(
+      'name' => 'world',
+      '_controller' => function($name) use($logger) {
+        $logger->info('Message from controller'); 
+      }
+    )));
+
+    return new Router($configuration, $routeCollection, $logger);
   }
 }

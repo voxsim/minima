@@ -14,38 +14,7 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 class Router {
   private $matcher;
 
-  public function __construct($configuration, LoggerInterface $logger = null) {
-    $routeCollection = new RouteCollection();
-
-    $routeCollection->add('hello', new route('/hello/{name}', array(
-      'name' => 'world',
-      '_controller' => function($name) { 
-	return 'Hello ' . $name;
-      }
-    )));
-    
-    $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
-      'name' => 'World',
-      '_controller' => function ($name) use($configuration) {
-	$twig = \Minima\Twig::create($configuration);
-	return $twig->render('hello.twig', array('name' => $name));
-      }
-    )));
-
-    $routeCollection->add('rand_hello', new route('/rand_hello/{name}', array(
-      'name' => 'world',
-      '_controller' => function($name) { 
-	return 'Hello ' . $name . ' ' . rand();
-      }
-    )));
-
-    $routeCollection->add('log_hello', new route('/log_hello/{name}', array(
-      'name' => 'world',
-      '_controller' => function($name) use($logger) {
-        $logger->info('Message from controller'); 
-      }
-    )));
-
+  public function __construct($configuration, RouteCollection $routeCollection, LoggerInterface $logger = null) {
     $context = new RequestContext();
     $this->matcher = new UrlMatcher($routeCollection, $context);
     $this->logger = $logger;
