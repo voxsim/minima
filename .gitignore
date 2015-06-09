@@ -1,4 +1,5 @@
 minima.log
 vendor/*
 cache/*
-test/cache/*
+unit-tests/cache/*
+integration-tests/cache/*
