@@ -11,6 +11,7 @@
 
 namespace Minima;
 
+use Minima\Routing\RouterInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\TerminableInterface;
@@ -35,16 +36,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
     protected $resolver;
     protected $requestStack;
 
-    /**
-     * Constructor.
-     *
-     * @param EventDispatcherInterface    $dispatcher   An EventDispatcherInterface instance
-     * @param ControllerResolverInterface $resolver     A ControllerResolverInterface instance
-     * @param RequestStack                $requestStack A stack for master/sub requests
-     *
-     * @api
-     */
-    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, \Minima\Routing\Router $router = null)
+    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null)
     {
         $this->dispatcher = $dispatcher;
         $this->resolver = $resolver;
@@ -52,11 +44,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 	$this->router = $router;
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @api
-     */
     public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
         try {
@@ -72,21 +59,11 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @api
-     */
     public function terminate(Request $request, Response $response)
     {
         $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($this, $request, $response));
     }
 
-    /**
-     * @throws \LogicException If the request stack is empty
-     *
-     * @internal
-     */
     public function terminateWithException(\Exception $exception)
     {
         if (!$request = $this->requestStack->getMasterRequest()) {
@@ -101,19 +78,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->terminate($request, $response);
     }
 
-    /**
-     * Handles a request to convert it to a response.
-     *
-     * Exceptions are not caught.
-     *
-     * @param Request $request A Request instance
-     * @param int     $type    The type of the request (one of HttpKernelInterface::MASTER_REQUEST or HttpKernelInterface::SUB_REQUEST)
-     *
-     * @return Response A Response instance
-     *
-     * @throws \LogicException       If one of the listener does not behave as expected
-     * @throws NotFoundHttpException When controller cannot be found
-     */
     private function handleRaw(Request $request, $type = self::MASTER_REQUEST)
     {
         $this->requestStack->push($request);
@@ -169,17 +133,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         return $this->filterResponse($response, $request, $type);
     }
 
-    /**
-     * Filters a response object.
-     *
-     * @param Response $response A Response instance
-     * @param Request  $request  An error message in case the response is not a Response object
-     * @param int      $type     The type of the request (one of HttpKernelInterface::MASTER_REQUEST or HttpKernelInterface::SUB_REQUEST)
-     *
-     * @return Response The filtered Response instance
-     *
-     * @throws \RuntimeException if the passed object is not a Response instance
-     */
     private function filterResponse(Response $response, Request $request, $type)
     {
         $event = new FilterResponseEvent($this, $request, $type, $response);
@@ -191,33 +144,12 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         return $event->getResponse();
     }
 
-    /**
-     * Publishes the finish request event, then pop the request from the stack.
-     *
-     * Note that the order of the operations is important here, otherwise
-     * operations such as {@link RequestStack::getParentRequest()} can lead to
-     * weird results.
-     *
-     * @param Request $request
-     * @param int     $type
-     */
     private function finishRequest(Request $request, $type)
     {
         $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($this, $request, $type));
         $this->requestStack->pop();
     }
 
-    /**
-     * Handles an exception by trying to convert it to a Response.
-     *
-     * @param \Exception $e       An \Exception instance
-     * @param Request    $request A Request instance
-     * @param int        $type    The type of the request
-     *
-     * @return Response A Response instance
-     *
-     * @throws \Exception
-     */
     private function handleException(\Exception $e, $request, $type)
     {
         $event = new GetResponseForExceptionEvent($this, $request, $type, $e);

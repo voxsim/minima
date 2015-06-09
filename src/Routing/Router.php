@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
-class Router {
+class Router implements RouterInterface {
   private $matcher;
 
   public function __construct($configuration, RouteCollection $routeCollection, LoggerInterface $logger = null) {
