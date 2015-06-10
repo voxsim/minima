@@ -1,10 +1,11 @@
 <?php namespace Minima;
 
+use Minima\HttpKernel;
 use Minima\Logging\LogListener;
 use Minima\Routing\StringToResponseListener;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\EventListener\ResponseListener;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Controller\ControllerResolverInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,10 +21,10 @@ class ApplicationDebug
     $configuration = array_merge($defaultConfiguration, $configuration);
 
     $this->configuration = $configuration;
-    $this->httpKernel = new \Minima\HttpKernel($dispatcher, $resolver, null, $router);
+    $this->httpKernel = new HttpKernel($dispatcher, $resolver, null, $router);
 
     $dispatcher->addSubscriber(new LogListener($logger));
-    $dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener($this->configuration['charset']));
+    $dispatcher->addSubscriber(new ResponseListener($this->configuration['charset']));
     $dispatcher->addSubscriber(new StringToResponseListener);
   }
 
