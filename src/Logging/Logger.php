@@ -5,7 +5,7 @@ use Monolog\Handler\StreamHandler;
 
 class Logger extends \Monolog\Logger {
   public function __construct() {
-    parent::__construct('minima');
+    parent::__construct('Minima');
   }
 
   public static function build($configuration = array()) {

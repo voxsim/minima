@@ -1,14 +1,4 @@
 <?php
-
-/*
- * This file is part of the Silex framework.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Minima\Logging;
 
 use Psr\Log\LoggerInterface;
@@ -23,9 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
-/**
- * Log request, response and exceptions.
- */
 class LogListener implements EventSubscriberInterface
 {
     protected $logger;
@@ -35,11 +22,6 @@ class LogListener implements EventSubscriberInterface
         $this->logger = $logger;
     }
 
-    /**
-     * Logs master requests on event KernelEvents::REQUEST.
-     *
-     * @param GetResponseEvent $event
-     */
     public function onKernelRequest(GetResponseEvent $event)
     {
         if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType()) {
@@ -49,11 +31,6 @@ class LogListener implements EventSubscriberInterface
         $this->logRequest($event->getRequest());
     }
 
-    /**
-     * Logs master response on event KernelEvents::RESPONSE.
-     *
-     * @param FilterResponseEvent $event
-     */
     public function onKernelResponse(FilterResponseEvent $event)
     {
         if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType()) {
@@ -63,31 +40,16 @@ class LogListener implements EventSubscriberInterface
         $this->logResponse($event->getResponse());
     }
 
-    /**
-     * Logs uncaught exceptions on event KernelEvents::EXCEPTION.
-     *
-     * @param GetResponseForExceptionEvent $event
-     */
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
         $this->logException($event->getException());
     }
 
-    /**
-     * Logs a request.
-     *
-     * @param Request $request
-     */
     protected function logRequest(Request $request)
     {
         $this->logger->info('> '.$request->getMethod().' '.$request->getRequestUri());
     }
 
-    /**
-     * Logs a response.
-     *
-     * @param Response $response
-     */
     protected function logResponse(Response $response)
     {
         if ($response instanceof RedirectResponse) {
@@ -97,11 +59,6 @@ class LogListener implements EventSubscriberInterface
         }
     }
 
-    /**
-     * Logs an exception.
-     *
-     * @param \Exception $e
-     */
     protected function logException(\Exception $e)
     {
         $message = sprintf('%s: %s (uncaught exception) at %s line %s', get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());

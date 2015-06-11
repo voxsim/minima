@@ -1,14 +1,4 @@
 <?php
-
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Minima;
 
 use Minima\Routing\RouterInterface;
@@ -32,194 +22,184 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class HttpKernel implements HttpKernelInterface, TerminableInterface
 {
-    protected $dispatcher;
-    protected $resolver;
-    protected $requestStack;
+  protected $dispatcher;
+  protected $resolver;
+  protected $requestStack;
 
-    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null)
-    {
-        $this->dispatcher = $dispatcher;
-        $this->resolver = $resolver;
-        $this->requestStack = $requestStack ?: new RequestStack();
-	$this->router = $router;
+  public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null)
+  {
+    $this->dispatcher = $dispatcher;
+    $this->resolver = $resolver;
+    $this->requestStack = $requestStack ?: new RequestStack();
+    $this->router = $router;
+  }
+
+  public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+  {
+    try {
+      return $this->handleRaw($request, $type);
+    } catch (\Exception $e) {
+      if (false === $catch) {
+	$this->finishRequest($request, $type);
+
+	throw $e;
+      }
+
+      return $this->handleException($e, $request, $type);
+    }
+  }
+
+  public function terminate(Request $request, Response $response)
+  {
+    $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($this, $request, $response));
+  }
+
+  public function terminateWithException(\Exception $exception)
+  {
+      if (!$request = $this->requestStack->getMasterRequest()) {
+	  throw new \LogicException('Request stack is empty', 0, $exception);
+      }
+
+      $response = $this->handleException($exception, $request, self::MASTER_REQUEST);
+
+      $response->sendHeaders();
+      $response->sendContent();
+
+      $this->terminate($request, $response);
+  }
+
+  private function handleRaw(Request $request, $type = self::MASTER_REQUEST)
+  {
+    $this->requestStack->push($request);
+
+    $event = new GetResponseEvent($this, $request, $type);
+    $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
+
+    if ($event->hasResponse()) {
+      return $this->filterResponse($event->getResponse(), $request, $type);
     }
 
-    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
-    {
-        try {
-            return $this->handleRaw($request, $type);
-        } catch (\Exception $e) {
-            if (false === $catch) {
-                $this->finishRequest($request, $type);
-
-                throw $e;
-            }
-
-            return $this->handleException($e, $request, $type);
-        }
+    if($this->router != null) {
+      $this->router->lookup($request);
     }
 
-    public function terminate(Request $request, Response $response)
-    {
-        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($this, $request, $response));
+    if (false === $controller = $this->resolver->getController($request)) {
+      throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $request->getPathInfo()));
     }
 
-    public function terminateWithException(\Exception $exception)
-    {
-        if (!$request = $this->requestStack->getMasterRequest()) {
-            throw new \LogicException('Request stack is empty', 0, $exception);
-        }
+    $event = new FilterControllerEvent($this, $controller, $request, $type);
+    $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
 
-        $response = $this->handleException($exception, $request, self::MASTER_REQUEST);
+    $controller = $event->getController();
+    $arguments = $this->resolver->getArguments($request, $controller);
 
-        $response->sendHeaders();
-        $response->sendContent();
+    $response = call_user_func_array($controller, $arguments);
 
-        $this->terminate($request, $response);
+    if (!$response instanceof Response) {
+      $event = new GetResponseForControllerResultEvent($this, $request, $type, $response);
+      $this->dispatcher->dispatch(KernelEvents::VIEW, $event);
+
+      if ($event->hasResponse()) {
+	$response = $event->getResponse();
+      }
+
+      if (!$response instanceof Response) {
+	$msg = sprintf('The controller must return a response (%s given).', $this->varToString($response));
+
+	if (null === $response) {
+	  $msg .= ' Did you forget to add a return statement somewhere in your controller?';
+	}
+	throw new \LogicException($msg);
+      }
     }
 
-    private function handleRaw(Request $request, $type = self::MASTER_REQUEST)
-    {
-        $this->requestStack->push($request);
+    return $this->filterResponse($response, $request, $type);
+  }
 
-        // request
-        $event = new GetResponseEvent($this, $request, $type);
-        $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
+  private function filterResponse(Response $response, Request $request, $type)
+  {
+    $event = new FilterResponseEvent($this, $request, $type, $response);
+    $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
 
-        if ($event->hasResponse()) {
-            return $this->filterResponse($event->getResponse(), $request, $type);
-        }
+    $this->finishRequest($request, $type);
 
-	// routing
-	if($this->router != null) {
-	  $this->router->lookup($request);
-        }
+    return $event->getResponse();
+  }
 
-        // load controller
-        if (false === $controller = $this->resolver->getController($request)) {
-            throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $request->getPathInfo()));
-        }
+  private function finishRequest(Request $request, $type)
+  {
+    $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($this, $request, $type));
+    $this->requestStack->pop();
+  }
 
-        $event = new FilterControllerEvent($this, $controller, $request, $type);
-        $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
-        $controller = $event->getController();
+  private function handleException(\Exception $e, $request, $type)
+  {
+    $event = new GetResponseForExceptionEvent($this, $request, $type, $e);
+    $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
 
-        // controller arguments
-        $arguments = $this->resolver->getArguments($request, $controller);
+    // a listener might have replaced the exception
+    $e = $event->getException();
 
-        // call controller
-        $response = call_user_func_array($controller, $arguments);
-
-        // view
-        if (!$response instanceof Response) {
-            $event = new GetResponseForControllerResultEvent($this, $request, $type, $response);
-            $this->dispatcher->dispatch(KernelEvents::VIEW, $event);
-
-            if ($event->hasResponse()) {
-                $response = $event->getResponse();
-            }
-
-            if (!$response instanceof Response) {
-                $msg = sprintf('The controller must return a response (%s given).', $this->varToString($response));
-
-                // the user may have forgotten to return something
-                if (null === $response) {
-                    $msg .= ' Did you forget to add a return statement somewhere in your controller?';
-                }
-                throw new \LogicException($msg);
-            }
-        }
-
-        return $this->filterResponse($response, $request, $type);
+    if (!$event->hasResponse()) {
+      $this->finishRequest($request, $type);
+      throw $e;
     }
 
-    private function filterResponse(Response $response, Request $request, $type)
-    {
-        $event = new FilterResponseEvent($this, $request, $type, $response);
+    $response = $event->getResponse();
 
-        $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
-
-        $this->finishRequest($request, $type);
-
-        return $event->getResponse();
+    // the developer asked for a specific status code
+    if ($response->headers->has('X-Status-Code')) {
+      $response->setStatusCode($response->headers->get('X-Status-Code'));
+      $response->headers->remove('X-Status-Code');
+    } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
+      // ensure that we actually have an error response
+      if ($e instanceof HttpExceptionInterface) {
+	// keep the HTTP status code and headers
+	$response->setStatusCode($e->getStatusCode());
+	$response->headers->add($e->getHeaders());
+      } else {
+	$response->setStatusCode(500);
+      }
     }
 
-    private function finishRequest(Request $request, $type)
-    {
-        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($this, $request, $type));
-        $this->requestStack->pop();
+    try {
+      return $this->filterResponse($response, $request, $type);
+    } catch (\Exception $e) {
+      return $response;
+    }
+  }
+
+  private function varToString($var)
+  {
+    if (is_object($var)) {
+      return sprintf('Object(%s)', get_class($var));
     }
 
-    private function handleException(\Exception $e, $request, $type)
-    {
-        $event = new GetResponseForExceptionEvent($this, $request, $type, $e);
-        $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
+    if (is_array($var)) {
+      $a = array();
+      foreach ($var as $k => $v) {
+	$a[] = sprintf('%s => %s', $k, $this->varToString($v));
+      }
 
-        // a listener might have replaced the exception
-        $e = $event->getException();
-
-        if (!$event->hasResponse()) {
-            $this->finishRequest($request, $type);
-
-            throw $e;
-        }
-
-        $response = $event->getResponse();
-
-        // the developer asked for a specific status code
-        if ($response->headers->has('X-Status-Code')) {
-            $response->setStatusCode($response->headers->get('X-Status-Code'));
-
-            $response->headers->remove('X-Status-Code');
-        } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
-            // ensure that we actually have an error response
-            if ($e instanceof HttpExceptionInterface) {
-                // keep the HTTP status code and headers
-                $response->setStatusCode($e->getStatusCode());
-                $response->headers->add($e->getHeaders());
-            } else {
-                $response->setStatusCode(500);
-            }
-        }
-
-        try {
-            return $this->filterResponse($response, $request, $type);
-        } catch (\Exception $e) {
-            return $response;
-        }
+      return sprintf('Array(%s)', implode(', ', $a));
     }
 
-    private function varToString($var)
-    {
-        if (is_object($var)) {
-            return sprintf('Object(%s)', get_class($var));
-        }
-
-        if (is_array($var)) {
-            $a = array();
-            foreach ($var as $k => $v) {
-                $a[] = sprintf('%s => %s', $k, $this->varToString($v));
-            }
-
-            return sprintf('Array(%s)', implode(', ', $a));
-        }
-
-        if (is_resource($var)) {
-            return sprintf('Resource(%s)', get_resource_type($var));
-        }
-
-        if (null === $var) {
-            return 'null';
-        }
-
-        if (false === $var) {
-            return 'false';
-        }
-
-        if (true === $var) {
-            return 'true';
-        }
-
-        return (string) $var;
+    if (is_resource($var)) {
+      return sprintf('Resource(%s)', get_resource_type($var));
     }
+
+    if (null === $var) {
+      return 'null';
+    }
+
+    if (false === $var) {
+      return 'false';
+    }
+
+    if (true === $var) {
+      return 'true';
+    }
+
+    return (string) $var;
+  }
 }

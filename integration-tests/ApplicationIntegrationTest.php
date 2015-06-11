@@ -2,8 +2,8 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+use Minima\ApplicationFactory;
 use Minima\Logging\Logger;
-use Minima\Routing\Router;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
@@ -65,9 +65,7 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
     $this->application->handle($request);
     $messages = $this->logger->getMessages();
 
-    $this->assertEquals('> GET /log_hello/Simon', $messages[0][1]);
-    $this->assertEquals('Matched route "log_hello" (parameters: "name": "Simon", "_controller": "{}", "_route": "log_hello")', $messages[1][1]);
-    $this->assertEquals('Message from controller', $messages[2][1]);
+    $this->assertEquals('Message from controller', $messages[0][1]);
   }
 
   private function createApplication(LoggerInterface $logger)
@@ -78,12 +76,11 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 			);
 
     $dispatcher = new EventDispatcher();
-    $router = $this->createRouter($configuration, $logger);
-    $resolver = new ControllerResolver($logger);
-    return new \Minima\Application($configuration, $dispatcher, $resolver, $router, $logger);
+    $routeCollection = $this->createRouteCollection($configuration, $this->logger);
+    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration);
   }
 
-  public function createRouter($configuration, $logger) {
+  public function createRouteCollection(array $configuration, LoggerInterface $logger) {
     $routeCollection = new RouteCollection();
 
     $routeCollection->add('hello', new route('/hello/{name}', array(
@@ -115,6 +112,6 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
       }
     )));
 
-    return new Router($configuration, $routeCollection, $logger);
+    return $routeCollection;
   }
 }

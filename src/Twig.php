@@ -1,5 +1,6 @@
 <?php namespace Minima;
 
+// SMELL
 class Twig extends \Twig_Environment {
   public function __construct($configuration) {
     $defaultConfiguration = array(
@@ -10,9 +11,7 @@ class Twig extends \Twig_Environment {
     $configuration = array_merge($defaultConfiguration, $configuration);
 
     $filesystem = new \Twig_Loader_Filesystem($configuration['twig.path']);
-
     $loaderArray = new \Twig_Loader_Array(array());
-
     $loader = new \Twig_Loader_Chain(array($loaderArray, $filesystem));
 
     $options = array(
