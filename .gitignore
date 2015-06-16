@@ -3,3 +3,4 @@ vendor/*
 cache/*
 unit-tests/cache/*
 integration-tests/cache/*
+coverage/*

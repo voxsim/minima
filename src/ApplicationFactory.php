@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 use Symfony\Component\HttpKernel\HttpCache\Store;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouteCollection;
 
 class ApplicationFactory {
@@ -60,6 +61,6 @@ class ApplicationFactory {
     $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
     $dispatcher->addSubscriber(new StringToResponseListener);
 
-    return new HttpKernel($dispatcher, $resolver, null, $router);
+    return new HttpKernel($dispatcher, $resolver, new RequestStack(), $router);
   }
 }
