@@ -38,7 +38,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->httpKernel->handle($this->request);
   }
 
-  // TODO: Refactoring with mock, is it possible?
+  // TODO: Is it possible to refactor with mock?
   public function testHandleWhenEventRequestReturnResponse()
   {
     $dispatcher = new EventDispatcher();
@@ -55,5 +55,18 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->requestStack->expects($this->once())->method('pop');
 
     $this->assertEquals('hello', $this->httpKernel->handle($this->request)->getContent());
+  }
+
+  /**
+   * @expectedException \Exception
+   */
+  public function testHandleWithinExceptionAndNotCatched()
+  {
+    $this->requestStack->expects($this->once())->method('push');
+    $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything())->willThrowException(new \Exception());
+    $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
+    $this->requestStack->expects($this->once())->method('pop');
+
+    $this->httpKernel->handle($this->request, HttpKernelInterface::MASTER_REQUEST, false);
   }
 }
