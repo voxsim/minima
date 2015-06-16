@@ -6,10 +6,12 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class HttpKernelTest extends \PHPUnit_Framework_TestCase {
 
-  public function __construct() {
+  public function __construct()
+  {
     $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
     $this->resolver = $this->getMockBuilder('Minima\Controller\ControllerResolverInterface')->getMock();
     $this->requestStack = $this->getMockBuilder('Symfony\Component\HttpFoundation\RequestStack')->getMock();
@@ -23,7 +25,8 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->httpKernel = new HttpKernel($this->dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
   }
 
-  public function testHandle() {
+  public function testHandle()
+  {
     $this->requestStack->expects($this->once())->method('push');
     $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
     $this->router->expects($this->once())->method('lookup');
@@ -32,6 +35,25 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 
-    $this->httpKernel->handleRaw($this->request);
+    $this->httpKernel->handle($this->request);
+  }
+
+  // TODO: Refactoring with mock, is it possible?
+  public function testHandleWhenEventRequestReturnResponse()
+  {
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addListener(KernelEvents::REQUEST, function ($event) {
+	$event->setResponse(new Response('hello'));
+    });
+
+    $this->httpKernel = new HttpKernel($dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
+
+    $this->requestStack->expects($this->once())->method('push');
+    $this->router->expects($this->never())->method('lookup');
+    $this->resolver->expects($this->never())->method('resolve');
+    $this->responsePreparer->expects($this->once())->method('prepare')->willReturn(new Response('hello'));
+    $this->requestStack->expects($this->once())->method('pop');
+
+    $this->assertEquals('hello', $this->httpKernel->handle($this->request)->getContent());
   }
 }

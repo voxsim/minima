@@ -77,7 +77,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
         if ($event->hasResponse()) {
-	  return $this->filterResponse($event->getResponse(), $request, $type);
+	  return $this->prepareResponse($event->getResponse(), $request, $type);
         }
 
 	if ($this->router != null) {	
@@ -93,7 +93,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 	return $response;
     }
 
-    private function filterResponse(Response $response, Request $request, $type)
+    private function prepareResponse(Response $response, Request $request, $type)
     {
       $response = $this->responsePreparer->prepare($response, $request, $type, $this);
       $this->finishRequest($request, $type);
@@ -139,7 +139,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         }
 
         try {
-            return $this->filterResponse($response, $request, $type);
+            return $this->prepareResponse($response, $request, $type);
         } catch (\Exception $e) {
             return $response;
         }
