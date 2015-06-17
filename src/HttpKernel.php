@@ -55,42 +55,28 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($this, $request, $response));
     }
 
-    public function terminateWithException(\Exception $exception)
-    {
-        if (!$request = $this->requestStack->getMasterRequest()) {
-            throw new \LogicException('Request stack is empty', 0, $exception);
-        }
-
-        $response = $this->handleException($exception, $request, self::MASTER_REQUEST);
-
-        $response->sendHeaders();
-        $response->sendContent();
-
-        $this->terminate($request, $response);
-    }
-
     public function handleRaw(Request $request, $type = self::MASTER_REQUEST)
     {
-        $this->requestStack->push($request);
+      $this->requestStack->push($request);
 
-        $event = new GetResponseEvent($this, $request, $type);
-        $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
+      $event = new GetResponseEvent($this, $request, $type);
+      $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
-        if ($event->hasResponse()) {
-	  return $this->prepareResponse($event->getResponse(), $request, $type);
-        }
+      if ($event->hasResponse()) {
+	return $this->prepareResponse($event->getResponse(), $request, $type);
+      }
 
-	if ($this->router != null) {	
-	  $this->router->lookup($request);
-        }
+      if ($this->router != null) {
+	$this->router->lookup($request);
+      }
 
-	list($controller, $arguments) = $this->resolver->resolve($request);
+      list($controller, $arguments) = $this->resolver->resolve($request);
 
-	$response = call_user_func_array($controller, $arguments);
-        
-        $response = $this->responsePreparer->validateAndPrepare($response, $request, $type, $this);
-	$this->finishRequest($request, $type);
-	return $response;
+      $response = call_user_func_array($controller, $arguments);
+
+      $response = $this->responsePreparer->validateAndPrepare($response, $request, $type, $this);
+      $this->finishRequest($request, $type);
+      return $response;
     }
 
     private function prepareResponse(Response $response, Request $request, $type)
