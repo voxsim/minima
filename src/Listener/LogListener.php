@@ -23,19 +23,11 @@ class LogListener implements EventSubscriberInterface
 
   public function onKernelRequest(GetResponseEvent $event)
   {
-    if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType()) {
-      return;
-    }
-
     $this->logRequest($event->getRequest());
   }
 
   public function onKernelResponse(FilterResponseEvent $event)
   {
-    if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType()) {
-      return;
-    }
-
     $this->logResponse($event->getResponse());
   }
 

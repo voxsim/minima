@@ -23,20 +23,8 @@ class LogListenerTest extends \PHPUnit_Framework_TestCase {
   {
     $request = Request::create('/route', 'GET');
 
-    $this->requestEvent->expects($this->once())->method('getRequestType')->willReturn(HttpKernelInterface::MASTER_REQUEST);
     $this->requestEvent->expects($this->once())->method('getRequest')->willReturn($request);
     $this->logger->expects($this->once())->method('info')->with('> GET /route');
-
-    $this->listener->onKernelRequest($this->requestEvent);
-  }
-
-  public function testOnKernelRequestForNonMasterRequest()
-  {
-    $request = Request::create('/route', 'GET');
-
-    $this->requestEvent->expects($this->once())->method('getRequestType')->willReturn(HttpKernelInterface::SUB_REQUEST);
-    $this->requestEvent->expects($this->never())->method('getRequest')->willReturn($request);
-    $this->logger->expects($this->never())->method('info')->with('> GET /route');
 
     $this->listener->onKernelRequest($this->requestEvent);
   }
@@ -46,21 +34,8 @@ class LogListenerTest extends \PHPUnit_Framework_TestCase {
     $response = new Response();
     $response->setStatusCode(404);
 
-    $this->responseEvent->expects($this->once())->method('getRequestType')->willReturn(HttpKernelInterface::MASTER_REQUEST);
     $this->responseEvent->expects($this->once())->method('getResponse')->willReturn($response);
     $this->logger->expects($this->once())->method('info')->with('< 404');
-
-    $this->listener->onKernelResponse($this->responseEvent);
-  }
-
-  public function testOnKernelResponseForNonMasterRequest()
-  {
-    $response = new Response();
-    $response->setStatusCode(404);
-
-    $this->responseEvent->expects($this->once())->method('getRequestType')->willReturn(HttpKernelInterface::SUB_REQUEST);
-    $this->responseEvent->expects($this->never())->method('getResponse');
-    $this->logger->expects($this->never())->method('info');
 
     $this->listener->onKernelResponse($this->responseEvent);
   }
@@ -69,7 +44,6 @@ class LogListenerTest extends \PHPUnit_Framework_TestCase {
   {
     $response = new RedirectResponse('www.target.url', 302);
 
-    $this->responseEvent->expects($this->once())->method('getRequestType')->willReturn(HttpKernelInterface::MASTER_REQUEST);
     $this->responseEvent->expects($this->once())->method('getResponse')->willReturn($response);
     $this->logger->expects($this->once())->method('info')->with('< 302 www.target.url');
 
