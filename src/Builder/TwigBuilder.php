@@ -1,8 +1,7 @@
-<?php namespace Minima;
+<?php namespace Minima\Builder;
 
-// SMELL
-class Twig extends \Twig_Environment {
-  public function __construct($configuration) {
+class TwigBuilder extends \Twig_Environment {
+  public static function build($configuration = array()) {
     $defaultConfiguration = array(
 			      'debug' => false,
 			      'charset' => 'UTF-8',
@@ -20,10 +19,6 @@ class Twig extends \Twig_Environment {
 	'strict_variables' => $configuration['debug']
     );
 
-    parent::__construct($loader, $options);
-  }
-
-  public static function create($configuration = array()) {
-    return new Twig($configuration);
+    return new TwigBuilder($loader, $options);
   }
 }

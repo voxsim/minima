@@ -1,9 +1,9 @@
 <?php namespace Minima;
 
+use Minima\Builder\LoggerBuilder;
 use Minima\Cache\SetTtlListener;
 use Minima\Controller\ControllerResolver;
 use Minima\Kernel\HttpKernel;
-use Minima\Logging\Logger;
 use Minima\Logging\LogListener;
 use Minima\Routing\Router;
 use Minima\Routing\StringToResponseListener;
@@ -25,7 +25,7 @@ class ApplicationFactory {
 			    );
     $configuration = array_merge($defaultConfiguration, $configuration);
     
-    $logger = Logger::build($configuration);
+    $logger = LoggerBuilder::build($configuration);
     $router = new Router($configuration, $routeCollection, $logger);
     $resolver = new ControllerResolver($dispatcher);
     if(isset($configuration['debug']) && $configuration['debug'])

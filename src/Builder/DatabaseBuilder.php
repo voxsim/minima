@@ -1,7 +1,6 @@
-<?php namespace Minima;
+<?php namespace Minima\Builder;
 
-class Database {
-
+class DatabaseBuilder {
   public static function getConnection() {
     $config = new \Doctrine\DBAL\Configuration();
     $params = array(

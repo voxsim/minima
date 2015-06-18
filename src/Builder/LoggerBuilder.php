@@ -1,13 +1,9 @@
-<?php namespace Minima\Logging;
+<?php namespace Minima\Builder;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 
-class Logger extends \Monolog\Logger {
-  public function __construct() {
-    parent::__construct('Minima');
-  }
-
+class LoggerBuilder extends \Monolog\Logger {
   public static function build($configuration = array()) {
     $defaultConfiguration = array(
 			      'log.level' => 'debug',
@@ -18,7 +14,7 @@ class Logger extends \Monolog\Logger {
     $loggerFormatter = new LineFormatter();
     $loggerHandler = new StreamHandler($configuration['log.file'], $configuration['log.level'], false);
     $loggerHandler->setFormatter($loggerFormatter);
-    $logger = new Logger();
+    $logger = new LoggerBuilder('Minima');
     $logger->pushHandler($loggerHandler);
     return $logger;
   }

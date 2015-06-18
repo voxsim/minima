@@ -3,7 +3,7 @@
 require_once __DIR__.'/../vendor/autoload.php';
 
 use Minima\ApplicationFactory;
-use Minima\Logging\Logger;
+use Minima\Builder\TwigBuilder;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
@@ -97,7 +97,7 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
     $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
       'name' => 'World',
       '_controller' => function ($name) use($configuration) {
-	$twig = \Minima\Twig::create($configuration);
+	$twig = TwigBuilder::build($configuration);
 	return $twig->render('hello.twig', array('name' => $name));
       }
     )));
