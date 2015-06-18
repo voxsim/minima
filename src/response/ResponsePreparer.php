@@ -25,67 +25,67 @@ class ResponsePreparer implements ResponsePreparerInterface
   
   public function prepare(Response $response, Request $request, $type)
   {
-      $event = new FilterResponseEvent(new NullHttpKernel(), $request, $type, $response);
+    $event = new FilterResponseEvent(new NullHttpKernel(), $request, $type, $response);
 
-      $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
+    $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
 
-      return $event->getResponse();
+    return $event->getResponse();
   }
 
   private function manageInvalidResponse($response, Request $request, $type)
   {
     if (!$response instanceof Response) {
-	$event = new GetResponseForControllerResultEvent(new NullHttpKernel(), $request, $type, $response);
-	$this->dispatcher->dispatch(KernelEvents::VIEW, $event);
+      $event = new GetResponseForControllerResultEvent(new NullHttpKernel(), $request, $type, $response);
+      $this->dispatcher->dispatch(KernelEvents::VIEW, $event);
 
-	if ($event->hasResponse()) {
-	    $response = $event->getResponse();
+      if ($event->hasResponse()) {
+	$response = $event->getResponse();
+      }
+
+      if (!$response instanceof Response) {
+	$msg = sprintf('The controller must return a response (%s given).', $this->varToString($response));
+
+	// the user may have forgotten to return something
+	if (null === $response) {
+	  $msg .= ' Did you forget to add a return statement somewhere in your controller?';
 	}
-
-	if (!$response instanceof Response) {
-	    $msg = sprintf('The controller must return a response (%s given).', $this->varToString($response));
-
-	    // the user may have forgotten to return something
-	    if (null === $response) {
-		$msg .= ' Did you forget to add a return statement somewhere in your controller?';
-	    }
-	    throw new \LogicException($msg);
-	}
+	throw new \LogicException($msg);
+      }
     }
     return $response;
   }
 
   private function varToString($var)
   {
-      if (is_object($var)) {
-	  return sprintf('Object(%s)', get_class($var));
+    if (is_object($var)) {
+      return sprintf('Object(%s)', get_class($var));
+    }
+
+    if (is_array($var)) {
+      $a = array();
+      foreach ($var as $k => $v) {
+	$a[] = sprintf('%s => %s', $k, $this->varToString($v));
       }
 
-      if (is_array($var)) {
-	  $a = array();
-	  foreach ($var as $k => $v) {
-	      $a[] = sprintf('%s => %s', $k, $this->varToString($v));
-	  }
+      return sprintf('Array(%s)', implode(', ', $a));
+    }
 
-	  return sprintf('Array(%s)', implode(', ', $a));
-      }
+    if (is_resource($var)) {
+      return sprintf('Resource(%s)', get_resource_type($var));
+    }
 
-      if (is_resource($var)) {
-	  return sprintf('Resource(%s)', get_resource_type($var));
-      }
+    if (null === $var) {
+      return 'null';
+    }
 
-      if (null === $var) {
-	  return 'null';
-      }
+    if (false === $var) {
+      return 'false';
+    }
 
-      if (false === $var) {
-	  return 'false';
-      }
+    if (true === $var) {
+      return 'true';
+    }
 
-      if (true === $var) {
-	  return 'true';
-      }
-
-      return (string) $var;
+    return (string) $var;
   }
 }
