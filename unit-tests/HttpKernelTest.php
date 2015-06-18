@@ -39,20 +39,18 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->httpKernel->handle($this->request);
   }
 
-  // TODO: Is it possible to refactor with mock?
   public function testHandleWhenEventRequestReturnResponse()
   {
-    $dispatcher = new EventDispatcher();
-    $dispatcher->addListener(KernelEvents::REQUEST, function ($event) {
+    $requestCallback = function ($_, $event) {
 	$event->setResponse(new Response('hello'));
-    });
-
-    $this->httpKernel = new HttpKernel($dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
+    };
 
     $this->requestStack->expects($this->once())->method('push');
+    $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything())->willReturnCallback($requestCallback);
     $this->router->expects($this->never())->method('lookup');
     $this->resolver->expects($this->never())->method('resolve');
     $this->responsePreparer->expects($this->once())->method('prepare')->willReturn(new Response('hello'));
+    $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 
     $this->assertEquals('hello', $this->httpKernel->handle($this->request)->getContent());
@@ -87,21 +85,21 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
 
   public function testHandleWithinExceptionAndCatchIsTrueWithAnExceptionHandlingListener()
   {
-    $dispatcher = new EventDispatcher();
-    $dispatcher->addListener(KernelEvents::EXCEPTION, function ($event) {
+    $exceptionCallback = function ($_, $event) {
 	$event->setResponse(new Response($event->getException()->getMessage()));
-    });
+    };
 
-    $callback = function($response) {
+    $responseCallback = function($response) {
 	return $response;
     };
 
-    $this->httpKernel = new HttpKernel($dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
-
     $this->requestStack->expects($this->once())->method('push');
+    $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
     $this->router->expects($this->once())->method('lookup');
     $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
-    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($callback);
+    $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
+    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);
+    $this->dispatcher->expects($this->at(2))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 
     $response = $this->httpKernel->handle($this->request, HttpKernelInterface::MASTER_REQUEST, true);
@@ -112,23 +110,23 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
 
   public function testHandleWithinExceptionAndCatchIsTrueWithAnExceptionHandlingListenerThatSetStatusCode()
   {
-    $dispatcher = new EventDispatcher();
-    $dispatcher->addListener(KernelEvents::EXCEPTION, function ($event) {
+    $exceptionCallback = function ($_, $event) {
 	$response = new Response($event->getException()->getMessage());
 	$response->headers->set('X-Status-Code', 404);
 	$event->setResponse($response);
-    });
+    };
 
-    $callback = function($response) {
+    $responseCallback = function($response) {
 	return $response;
     };
 
-    $this->httpKernel = new HttpKernel($dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
-
     $this->requestStack->expects($this->once())->method('push');
+    $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
     $this->router->expects($this->once())->method('lookup');
     $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
-    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($callback);
+    $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
+    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);
+    $this->dispatcher->expects($this->at(2))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 
     $response = $this->httpKernel->handle($this->request, HttpKernelInterface::MASTER_REQUEST, true);
@@ -140,23 +138,22 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
 
   public function testHandleWithinExceptionAndCatchIsTrueWithAnHttpExceptionInterface()
   {
-    $dispatcher = new EventDispatcher();
-    $dispatcher->addListener(KernelEvents::EXCEPTION, function ($event) {
+    $exceptionCallback = function ($_, $event) {
 	$response = new Response($event->getException()->getMessage());
 	$event->setResponse($response);
 	$event->setException(new HttpException(502, null, null, array('header1' => 'value1')));
-    });
-
-    $callback = function($response) {
-	return $response;
     };
 
-    $this->httpKernel = new HttpKernel($dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
+    $responseCallback = function($response) {
+	return $response;
+    };
 
     $this->requestStack->expects($this->once())->method('push');
     $this->router->expects($this->once())->method('lookup');
     $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
-    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($callback);
+    $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
+    $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);
+    $this->dispatcher->expects($this->at(2))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 
     $response = $this->httpKernel->handle($this->request, HttpKernelInterface::MASTER_REQUEST, true);
