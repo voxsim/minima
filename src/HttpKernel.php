@@ -70,7 +70,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 	$this->router->lookup($request);
       }
 
-      list($controller, $arguments) = $this->resolver->resolve($request);
+      list($controller, $arguments) = $this->resolver->resolve($request, $type, $this);
 
       $response = call_user_func_array($controller, $arguments);
 

@@ -1,12 +1,12 @@
 <?php namespace Minima;
 
 use Minima\Cache\SetTtlListener;
+use Minima\Controller\ControllerResolver;
 use Minima\Logging\Logger;
 use Minima\Logging\LogListener;
 use Minima\Routing\Router;
 use Minima\Routing\StringToResponseListener;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\Exception\FlattenException;
 use Symfony\Component\HttpKernel\EventListener\ExceptionListener;
 use Symfony\Component\HttpKernel\EventListener\ResponseListener;
@@ -26,7 +26,7 @@ class ApplicationFactory {
     
     $logger = Logger::build($configuration);
     $router = new Router($configuration, $routeCollection, $logger);
-    $resolver = new ControllerResolver($logger);
+    $resolver = new ControllerResolver($dispatcher, $logger);
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
