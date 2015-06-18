@@ -27,7 +27,7 @@ class ApplicationFactory {
     
     $logger = Logger::build($configuration);
     $router = new Router($configuration, $routeCollection, $logger);
-    $resolver = new ControllerResolver($dispatcher, $logger);
+    $resolver = new ControllerResolver($dispatcher);
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
