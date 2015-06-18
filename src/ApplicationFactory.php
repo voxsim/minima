@@ -2,6 +2,7 @@
 
 use Minima\Cache\SetTtlListener;
 use Minima\Controller\ControllerResolver;
+use Minima\Kernel\HttpKernel;
 use Minima\Logging\Logger;
 use Minima\Logging\LogListener;
 use Minima\Routing\Router;

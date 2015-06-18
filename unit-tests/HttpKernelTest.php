@@ -1,6 +1,6 @@
 <?php
 
-use Minima\HttpKernel;
+use Minima\Kernel\HttpKernel;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpFoundation\Response;

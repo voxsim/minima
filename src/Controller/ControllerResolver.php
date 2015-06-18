@@ -2,9 +2,9 @@
 
 namespace Minima\Controller;
 
+use Minima\Kernel\NullHttpKernel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -21,12 +21,12 @@ class ControllerResolver implements ControllerResolverInterface
         $this->logger = $logger;
     }
 
-    public function resolve(Request $request, $type, HttpKernelInterface $httpKernel) {
+    public function resolve(Request $request, $type) {
         if (false === $controller = $this->getController($request)) {
             throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $request->getPathInfo()));
         }
 
-        $event = new FilterControllerEvent($httpKernel, $controller, $request, $type);
+        $event = new FilterControllerEvent(new NullHttpKernel(), $controller, $request, $type);
         $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
         $controller = $event->getController();
 
