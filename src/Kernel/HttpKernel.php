@@ -3,7 +3,7 @@ namespace Minima\Kernel;
 
 use Minima\Controller\ControllerResolverInterface;
 use Minima\Routing\RouterInterface;
-use Minima\Routing\Router;
+use Minima\Routing\NullRouter;
 use Minima\Response\ResponsePreparerInterface;
 use Minima\Response\ResponsePreparer;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -31,7 +31,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->dispatcher = $dispatcher;
         $this->resolver = $resolver;
         $this->requestStack = $requestStack == null ? new RequestStack() : $requestStack;
-	$this->router = $router;
+	$this->router = $router == null ? new NullRouter() : $router;
 	$this->responsePreparer = $responsePreparer == null ? new ResponsePreparer($dispatcher) : $responsePreparer;
     }
 
@@ -47,9 +47,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 	  return $this->prepareResponse($event->getResponse(), $request, $type);
 	}
 
-	if ($this->router != null && $type === HttpKernelInterface::MASTER_REQUEST) {
-	  $this->router->lookup($request);
-	}
+	$this->router->lookup($request);
 
 	list($controller, $arguments) = $this->resolver->resolve($request, $type);
 
