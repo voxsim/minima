@@ -1,5 +1,7 @@
 <?php namespace Minima\Routing;
 
+use Minima\Util\Stringify;
+use Minima\Logger\NullLogger;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +22,7 @@ class Router implements RouterInterface {
     try {
       $parameters = $this->matcher->match($request->getPathInfo());
 
-      $this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], $this->parametersToString($parameters)));
+      $this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], Stringify::parametersToString($parameters)));
 
       $request->attributes->add($parameters);
       unset($parameters['_route'], $parameters['_controller']);
@@ -38,15 +40,5 @@ class Router implements RouterInterface {
 
       throw new MethodNotAllowedHttpException($e->getAllowedMethods(), $message, $e);
     }
-  }
-
-  private function parametersToString(array $parameters)
-  {
-    $pieces = array();
-    foreach ($parameters as $key => $val) {
-      $pieces[] = sprintf('"%s": "%s"', $key, (is_string($val) ? $val : json_encode($val)));
-    }
-
-    return implode(', ', $pieces);
   }
 }
