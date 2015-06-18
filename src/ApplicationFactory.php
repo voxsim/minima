@@ -3,20 +3,21 @@
 use Minima\Builder\LoggerBuilder;
 use Minima\Controller\ControllerResolver;
 use Minima\Kernel\HttpKernel;
-use Minima\Routing\Router;
-use Minima\Listener\SetTtlListener;
+use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
+use Minima\Listener\SetTtlListener;
 use Minima\Listener\StringToResponseListener;
+use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\HttpKernel\Exception\FlattenException;
-use Symfony\Component\HttpKernel\EventListener\ExceptionListener;
-use Symfony\Component\HttpKernel\EventListener\ResponseListener;
-use Symfony\Component\HttpKernel\HttpCache\HttpCache;
-use Symfony\Component\HttpKernel\HttpCache\Store;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\EventListener\ResponseListener;
+use Symfony\Component\HttpKernel\HttpCache\HttpCache;
+use Symfony\Component\HttpKernel\HttpCache\Store;
 use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
 
 class ApplicationFactory {
   public static function build(EventDispatcher $dispatcher, RouteCollection $routeCollection, $configuration = array()) {
@@ -26,7 +27,8 @@ class ApplicationFactory {
     $configuration = array_merge($defaultConfiguration, $configuration);
     
     $logger = LoggerBuilder::build($configuration);
-    $router = new Router($configuration, $routeCollection, $logger);
+    $matcher = new UrlMatcher($routeCollection, new RequestContext());
+    $router = new Router($configuration, $matcher, $logger);
     $resolver = new ControllerResolver($dispatcher);
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
@@ -43,12 +45,7 @@ class ApplicationFactory {
 
     $httpKernel = static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
-    $errorHandler = function (FlattenException $exception) {
-      $msg = 'Something went wrong! ('.$exception->getMessage().')';
-   
-      return new Response($msg, $exception->getStatusCode());
-    };
-    $dispatcher->addSubscriber(new ExceptionListener($errorHandler));
+    $dispatcher->addSubscriber(new ExceptionListener());
     $dispatcher->addSubscriber(new SetTtlListener($configuration['cache.page']));
 
     return new HttpCache($httpKernel, new Store($configuration['cache.path']));

@@ -40,14 +40,14 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
       try {
 	$this->requestStack->push($request);
 
-	$event = new GetResponseEvent($this, $request, $type);
+	$event = new GetResponseEvent(new NullHttpKernel(), $request, $type);
 	$this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
 	if ($event->hasResponse()) {
 	  return $this->prepareResponse($event->getResponse(), $request, $type);
 	}
 
-	if ($this->router != null) {
+	if ($this->router != null && $type === HttpKernelInterface::MASTER_REQUEST) {
 	  $this->router->lookup($request);
 	}
 
@@ -71,7 +71,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     public function terminate(Request $request, Response $response)
     {
-        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($this, $request, $response));
+        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent(new NullHttpKernel(), $request, $response));
     }
 
     private function prepareResponse(Response $response, Request $request, $type)
@@ -83,14 +83,14 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     private function finishRequest(Request $request, $type)
     {
-        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($this, $request, $type));
+        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent(new NullHttpKernel(), $request, $type));
         $this->requestStack->pop();
     }
 
     // TODO: How I should refactor this awful piece of code?
     private function handleException(\Exception $e, $request, $type)
     {
-        $event = new GetResponseForExceptionEvent($this, $request, $type, $e);
+        $event = new GetResponseForExceptionEvent(new NullHttpKernel(), $request, $type, $e);
         $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
 
         // a listener might have replaced the exception

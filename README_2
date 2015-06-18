@@ -27,6 +27,9 @@ For compatibility we will set the HttpKernel parameter to a Null Object that thr
 *** Fifth ***
 Some object are very complicate to build because they rely on Pimple that instances one object for everyone. To resolve this issue we create some builder to build some common objects in the Builder directory.
 
+*** Sixth ***
+Delete every reference to SUB_REQUEST because this a trick to call handle a second time
+
 I will create my own framework keeping in mind TDD and the SOLID PRINCIPLES and we will see what we will have :)
 I want to remember that this is my personal point of view.
 

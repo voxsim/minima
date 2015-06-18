@@ -24,6 +24,6 @@ class NullHttpKernel implements HttpKernelInterface
 {
     public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
-      throw new \RuntimeException('You shoudn\'t call from this Null Object, this is object was created for compatibility with KernelEvents');
+      throw new \RuntimeException('You shoudn\'t call from this Null Object, this object was created for compatibility with KernelEvents');
     }
 }

@@ -1,39 +1,26 @@
 <?php namespace Minima\Routing;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
-use Symfony\Component\HttpKernel\EventListener\RouterListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
 class Router implements RouterInterface {
   private $matcher;
 
-  public function __construct($configuration, RouteCollection $routeCollection, LoggerInterface $logger = null) {
-    $this->matcher = new UrlMatcher($routeCollection, new RequestContext());
-    $this->logger = $logger;
+  public function __construct($configuration, UrlMatcherInterface $matcher, LoggerInterface $logger = null) {
+    $this->matcher = $matcher;
+    $this->logger = $logger == null ? new NullLogger() : $logger;
   }
 
   public function lookup(Request $request) {
-    if ($request->attributes->has('_controller')) {
-      return;
-    }
-
     try {
-      if ($this->matcher instanceof RequestMatcherInterface) {
-	$parameters = $this->matcher->matchRequest($request);
-      } else {
-	$parameters = $this->matcher->match($request->getPathInfo());
-      }
+      $parameters = $this->matcher->match($request->getPathInfo());
 
-      if (null !== $this->logger) {
-	$this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], $this->parametersToString($parameters)));
-      }
+      $this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], $this->parametersToString($parameters)));
 
       $request->attributes->add($parameters);
       unset($parameters['_route'], $parameters['_controller']);
@@ -41,7 +28,7 @@ class Router implements RouterInterface {
     } catch (ResourceNotFoundException $e) {
       $message = sprintf('No route found for "%s %s"', $request->getMethod(), $request->getPathInfo());
 
-      if ($referer = $request->headers->get('referer')) {
+      if($referer = $request->headers->get('referer')) {
 	$message .= sprintf(' (from "%s")', $referer);
       }
 
