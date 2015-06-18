@@ -19,6 +19,21 @@ class ResponsePreparer implements ResponsePreparerInterface
 
   public function validateAndPrepare($response, Request $request, $type)
   {
+    $response = $this->manageInvalidResponse($response, $request, $type);
+    return $this->prepare($response, $request, $type);
+  }
+  
+  public function prepare(Response $response, Request $request, $type)
+  {
+      $event = new FilterResponseEvent(new NullHttpKernel(), $request, $type, $response);
+
+      $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
+
+      return $event->getResponse();
+  }
+
+  private function manageInvalidResponse($response, Request $request, $type)
+  {
     if (!$response instanceof Response) {
 	$event = new GetResponseForControllerResultEvent(new NullHttpKernel(), $request, $type, $response);
 	$this->dispatcher->dispatch(KernelEvents::VIEW, $event);
@@ -37,17 +52,7 @@ class ResponsePreparer implements ResponsePreparerInterface
 	    throw new \LogicException($msg);
 	}
     }
-
-    return $this->prepare($response, $request, $type);
-  }
-  
-  public function prepare(Response $response, Request $request, $type)
-  {
-      $event = new FilterResponseEvent(new NullHttpKernel(), $request, $type, $response);
-
-      $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
-
-      return $event->getResponse();
+    return $response;
   }
 
   private function varToString($var)
