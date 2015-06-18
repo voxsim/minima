@@ -1,11 +1,12 @@
 <?php namespace Minima\Routing;
 
 use Minima\Util\Stringify;
-use Minima\Logger\NullLogger;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
@@ -13,12 +14,13 @@ use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 class Router implements RouterInterface {
   private $matcher;
 
-  public function __construct($configuration, UrlMatcherInterface $matcher, LoggerInterface $logger = null) {
+  public function __construct(UrlMatcherInterface $matcher, LoggerInterface $logger = null) {
     $this->matcher = $matcher;
     $this->logger = $logger == null ? new NullLogger() : $logger;
   }
 
-  public function lookup(Request $request) {
+  public function lookup(Request $request)
+  {
     try {
       $parameters = $this->matcher->match($request->getPathInfo());
 

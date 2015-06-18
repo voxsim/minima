@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class LogListenerTest extends \PHPUnit_Framework_TestCase {
 
-  public function __construct()
+  public function setUp()
   {
     $this->logger = $this->getMockBuilder('Psr\Log\LoggerInterface')->getMock();
     $this->listener = new LogListener($this->logger);

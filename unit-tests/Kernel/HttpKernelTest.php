@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class HttpKernelTest extends \PHPUnit_Framework_TestCase {
 
-  public function __construct()
+  public function setUp()
   {
     $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
     $this->resolver = $this->getMockBuilder('Minima\Controller\ControllerResolverInterface')->getMock();

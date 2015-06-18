@@ -1,4 +1,3 @@
 src//Controller/ControllerResolver.php
 src//Response/ResponsePreparer.php
-src//Routing/Router.php
 set//Util/Stringify.php

@@ -28,7 +28,7 @@ class ApplicationFactory {
     
     $logger = LoggerBuilder::build($configuration);
     $matcher = new UrlMatcher($routeCollection, new RequestContext());
-    $router = new Router($configuration, $matcher, $logger);
+    $router = new Router($matcher, $logger);
     $resolver = new ControllerResolver($dispatcher);
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
