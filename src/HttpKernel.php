@@ -124,10 +124,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
             }
         }
 
-        try {
-            return $this->prepareResponse($response, $request, $type);
-        } catch (\Exception $e) {
-            return $response;
-        }
+        return $this->prepareResponse($response, $request, $type);
     }
 }
