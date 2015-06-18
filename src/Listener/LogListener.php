@@ -1,5 +1,4 @@
-<?php
-namespace Minima\Logging;
+<?php namespace Minima\Listener;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

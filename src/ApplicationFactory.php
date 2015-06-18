@@ -1,12 +1,12 @@
 <?php namespace Minima;
 
 use Minima\Builder\LoggerBuilder;
-use Minima\Cache\SetTtlListener;
 use Minima\Controller\ControllerResolver;
 use Minima\Kernel\HttpKernel;
-use Minima\Logging\LogListener;
 use Minima\Routing\Router;
-use Minima\Routing\StringToResponseListener;
+use Minima\Listener\SetTtlListener;
+use Minima\Listener\LogListener;
+use Minima\Listener\StringToResponseListener;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\FlattenException;
 use Symfony\Component\HttpKernel\EventListener\ExceptionListener;
