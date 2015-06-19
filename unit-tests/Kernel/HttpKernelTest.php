@@ -32,7 +32,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase {
     $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
     $this->router->expects($this->once())->method('lookup');
     $this->resolver->expects($this->once())->method('resolve')->willReturn(array($this->controller, $this->arguments));
-    $this->responsePreparer->expects($this->once())->method('validateAndPrepare');
+    $this->responsePreparer->expects($this->once())->method('prepare');
     $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
     $this->requestStack->expects($this->once())->method('pop');
 

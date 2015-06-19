@@ -22,30 +22,23 @@ class ResponsePreparerTest extends \PHPUnit_Framework_TestCase {
     $this->responsePreparer->prepare(new Response(), new Request(), null);
   }
 
-  public function testValidateAndPrepare()
-  {
-    $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::RESPONSE, $this->anything());
-
-    $this->responsePreparer->validateAndPrepare(new Response(), new Request(), null);
-  }
-
-  public function testValidateAndPrepareWithInvalidResponse()
+  public function testPrepareWithInvalidResponse()
   {
     try {
       $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::VIEW, $this->anything());
 
-      $this->responsePreparer->validateAndPrepare('invalid-response', new Request(), null);
+      $this->responsePreparer->prepare('invalid-response', new Request(), null);
     } catch(LogicException $e) {
       $this->assertEquals('The controller must return a response (invalid-response given).', $e->getMessage());
     }
   }
 
-  public function testValidateAndPrepareWithNullResponse()
+  public function testPrepareWithNullResponse()
   {
     try {
       $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::VIEW, $this->anything());
 
-      $this->responsePreparer->validateAndPrepare(null, new Request(), null);
+      $this->responsePreparer->prepare(null, new Request(), null);
     } catch(LogicException $e) {
       $this->assertEquals('The controller must return a response (null given). Did you forget to add a return statement somewhere in your controller?', $e->getMessage());
     }

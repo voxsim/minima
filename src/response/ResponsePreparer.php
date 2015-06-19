@@ -19,22 +19,7 @@ class ResponsePreparer implements ResponsePreparerInterface
     $this->dispatcher = $dispatcher;
   }
 
-  public function validateAndPrepare($response, Request $request)
-  {
-    $response = $this->manageInvalidResponse($response, $request);
-    return $this->prepare($response, $request);
-  }
-  
-  public function prepare(Response $response, Request $request)
-  {
-    $event = new FilterResponseEvent($request, $response);
-
-    $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
-
-    return $event->getResponse();
-  }
-
-  private function manageInvalidResponse($response, Request $request)
+  public function prepare($response, Request $request)
   {
     if (!$response instanceof Response) {
       $event = new GetResponseForControllerResultEvent($request, $response);
@@ -54,6 +39,11 @@ class ResponsePreparer implements ResponsePreparerInterface
 	throw new \LogicException($msg);
       }
     }
-    return $response;
+
+    $event = new FilterResponseEvent($request, $response);
+
+    $this->dispatcher->dispatch(KernelEvents::RESPONSE, $event);
+
+    return $event->getResponse();
   }
 }

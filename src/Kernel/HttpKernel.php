@@ -52,9 +52,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
 	$response = call_user_func_array($controller, $arguments);
 
-	$response = $this->responsePreparer->validateAndPrepare($response, $request);
-	$this->finishRequest($request);
-	return $response;
+	return $this->prepareResponse($response, $request);
       } catch (\Exception $e) {
 	if (false === $catch) {
 	  $this->finishRequest($request);
@@ -71,7 +69,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($request, $response));
     }
 
-    private function prepareResponse(Response $response, Request $request)
+    private function prepareResponse($response, Request $request)
     {
       $response = $this->responsePreparer->prepare($response, $request);
       $this->finishRequest($request);
@@ -104,7 +102,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         // the developer asked for a specific status code
         if ($response->headers->has('X-Status-Code')) {
             $response->setStatusCode($response->headers->get('X-Status-Code'));
-
             $response->headers->remove('X-Status-Code');
         } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
             // ensure that we actually have an error response
