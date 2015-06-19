@@ -1,11 +1,10 @@
-<?php namespace Minima;
+<?php
 
 use Minima\Builder\LoggerBuilder;
 use Minima\Controller\ControllerResolver;
 use Minima\Kernel\HttpKernel;
 use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
-use Minima\Listener\SetTtlListener;
 use Minima\Listener\StringToResponseListener;
 use Minima\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -30,6 +29,7 @@ class ApplicationFactory {
     $matcher = new UrlMatcher($routeCollection, new RequestContext());
     $router = new Router($matcher, $logger);
     $resolver = new ControllerResolver($dispatcher);
+
     if(isset($configuration['debug']) && $configuration['debug'])
       return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
@@ -46,9 +46,8 @@ class ApplicationFactory {
     $httpKernel = static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
     $dispatcher->addSubscriber(new ExceptionListener());
-    $dispatcher->addSubscriber(new SetTtlListener($configuration['cache.page']));
 
-    return new HttpCache($httpKernel, new Store($configuration['cache.path']));
+    return new HttpCache($httpKernel, new Store($configuration['cache.path']), null, array('default_ttl' => $configuration['cache.page']));
   }
 
   private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger) {

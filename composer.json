@@ -14,6 +14,9 @@
 	      "classmap": [
 		"src",
 		"doubles"
+	      ],
+	      "files": [
+		  "ApplicationFactory.php"
 	      ]
         },
 	"config": {

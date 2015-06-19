@@ -2,7 +2,6 @@
 
 require_once __DIR__.'/vendor/autoload.php';
 
-use Minima\ApplicationFactory;
 use Minima\Builder\DatabaseBuilder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,7 +10,7 @@ use Symfony\Component\Routing\RouteCollection;
 // Configuration
 $configuration = array();
 
-// Steteful Componenents
+// Stateful Componenents
 $dispatcher = new EventDispatcher();
 
 // Database
