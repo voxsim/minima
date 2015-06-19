@@ -1,11 +1,10 @@
 {
 	"license": "MIT",
 	"require": {
-		"symfony/class-loader": "2.6.*",
-		"symfony/http-foundation": "2.6.*",
-		"symfony/routing": "2.6.*",
-		"symfony/http-kernel": "2.6.*",
-		"symfony/security": "2.6.*",
+		"symfony/class-loader": "2.7.*",
+		"symfony/http-foundation": "2.7.*",
+		"symfony/routing": "2.7.*",
+		"symfony/http-kernel": "2.7.*",
 		"twig/twig": "^1.18",
 		"monolog/monolog": "^1.13",
 		"doctrine/dbal": "^2.5"
