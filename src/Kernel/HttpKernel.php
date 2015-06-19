@@ -21,99 +21,99 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class HttpKernel implements HttpKernelInterface, TerminableInterface
 {
-    protected $dispatcher;
-    protected $resolver;
-    protected $requestStack;
+  protected $dispatcher;
+  protected $resolver;
+  protected $requestStack;
 
-    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null, ResponsePreparerInterface $responsePreparer = null)
-    {
-        $this->dispatcher = $dispatcher;
-        $this->resolver = $resolver;
-        $this->requestStack = $requestStack == null ? new RequestStack() : $requestStack;
-	$this->router = $router == null ? new NullRouter() : $router;
-	$this->responsePreparer = $responsePreparer == null ? new ResponsePreparer($dispatcher) : $responsePreparer;
-    }
+  public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null, ResponsePreparerInterface $responsePreparer = null)
+  {
+    $this->dispatcher = $dispatcher;
+    $this->resolver = $resolver;
+    $this->requestStack = $requestStack == null ? new RequestStack() : $requestStack;
+    $this->router = $router == null ? new NullRouter() : $router;
+    $this->responsePreparer = $responsePreparer == null ? new ResponsePreparer($dispatcher) : $responsePreparer;
+  }
 
-    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
-    {
-      try {
-	$this->requestStack->push($request);
+  public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+  {
+    try {
+      $this->requestStack->push($request);
 
-	$event = new GetResponseEvent($request);
-	$this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
+      $event = new GetResponseEvent($request);
+      $this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
-	if ($event->hasResponse()) {
-	  return $this->prepareResponse($event->getResponse(), $request);
-	}
-
-	$this->router->lookup($request);
-
-	list($controller, $arguments) = $this->resolver->resolve($request);
-
-	$response = call_user_func_array($controller, $arguments);
-
-	return $this->prepareResponse($response, $request);
-      } catch (\Exception $e) {
-	if (false === $catch) {
-	  $this->finishRequest($request);
-
-	  throw $e;
-	}
-
-	return $this->handleException($e, $request);
+      if ($event->hasResponse()) {
+	return $this->prepareResponse($event->getResponse(), $request);
       }
-    }
 
-    public function terminate(Request $request, Response $response)
-    {
-        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($request, $response));
-    }
+      $this->router->lookup($request);
 
-    private function prepareResponse($response, Request $request)
-    {
-      $response = $this->responsePreparer->prepare($response, $request);
+      list($controller, $arguments) = $this->resolver->resolve($request);
+
+      $response = call_user_func_array($controller, $arguments);
+
+      return $this->prepareResponse($response, $request);
+    } catch (\Exception $e) {
+      if (false === $catch) {
+	$this->finishRequest($request);
+
+	throw $e;
+      }
+
+      return $this->handleException($e, $request);
+    }
+  }
+
+  public function terminate(Request $request, Response $response)
+  {
+    $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($request, $response));
+  }
+
+  private function prepareResponse($response, Request $request)
+  {
+    $response = $this->responsePreparer->prepare($response, $request);
+    $this->finishRequest($request);
+    return $response;
+  }
+
+  private function finishRequest(Request $request)
+  {
+    $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($request));
+    $this->requestStack->pop();
+  }
+
+  // TODO: How I should refactor this awful piece of code?
+  private function handleException(\Exception $exception, $request)
+  {
+    $event = new GetResponseForExceptionEvent($request, $exception);
+    $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
+
+    // a listener might have replaced the exception
+    $exception = $event->getException();
+
+    if (!$event->hasResponse()) {
       $this->finishRequest($request);
-      return $response;
+
+      throw $exception;
     }
 
-    private function finishRequest(Request $request)
-    {
-        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($request));
-        $this->requestStack->pop();
+    $response = $event->getResponse();
+
+    // the developer asked for a specific status code
+    if ($response->headers->has('X-Status-Code')) {
+	$response->setStatusCode($response->headers->get('X-Status-Code'));
+	$response->headers->remove('X-Status-Code');
+    } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
+	// ensure that we actually have an error response
+	if ($exception instanceof HttpExceptionInterface) {
+	    // keep the HTTP status code and headers
+	    $response->setStatusCode($exception->getStatusCode());
+	    $response->headers->add($exception->getHeaders());
+	} else {
+	    $response->setStatusCode(500);
+	}
     }
 
-    // TODO: How I should refactor this awful piece of code?
-    private function handleException(\Exception $e, $request)
-    {
-        $event = new GetResponseForExceptionEvent($request, $e);
-        $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
-
-        // a listener might have replaced the exception
-        $e = $event->getException();
-
-        if (!$event->hasResponse()) {
-            $this->finishRequest($request);
-
-            throw $e;
-        }
-
-        $response = $event->getResponse();
-
-        // the developer asked for a specific status code
-        if ($response->headers->has('X-Status-Code')) {
-            $response->setStatusCode($response->headers->get('X-Status-Code'));
-            $response->headers->remove('X-Status-Code');
-        } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
-            // ensure that we actually have an error response
-            if ($e instanceof HttpExceptionInterface) {
-                // keep the HTTP status code and headers
-                $response->setStatusCode($e->getStatusCode());
-                $response->headers->add($e->getHeaders());
-            } else {
-                $response->setStatusCode(500);
-            }
-        }
-
-        return $this->prepareResponse($response, $request);
-    }
+    return $this->prepareResponse($response, $request);
+  }
 }

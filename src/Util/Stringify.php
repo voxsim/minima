@@ -10,7 +10,7 @@ class Stringify {
     if (is_array($var)) {
       $a = array();
       foreach ($var as $k => $v) {
-	$a[] = sprintf('%s => %s', $k, $this->varToString($v));
+	$a[] = sprintf('%s => %s', $k, static::varToString($v));
       }
 
       return sprintf('Array(%s)', implode(', ', $a));
