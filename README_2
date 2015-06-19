@@ -1,5 +1,3 @@
-This is an experiment after reading this wondeful series on how create your own framework [1].
-
 *** First ***
 I built everything as Fabien described, but I really don't like the Application.php [2] in Silex, because everything is istantiated as global variable.
 After digging, I found that Silex is on top of Pimple [3] and it seems more like a Service Locator [4] than a "Dependency Injection Container".
@@ -45,3 +43,4 @@ References
 [6] http://www.jbrains.ca/training/the-worlds-best-introduction-to-test-driven-development
 [7] https://www.youtube.com/playlist?list=PLD0011D00849E1B79
 [8] http://codurance.com/videos/
+=======
