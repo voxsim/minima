@@ -40,30 +40,30 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
       try {
 	$this->requestStack->push($request);
 
-	$event = new GetResponseEvent(new NullHttpKernel(), $request, $type);
+	$event = new GetResponseEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST);
 	$this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
 	if ($event->hasResponse()) {
-	  return $this->prepareResponse($event->getResponse(), $request, $type);
+	  return $this->prepareResponse($event->getResponse(), $request, HttpKernelInterface::MASTER_REQUEST);
 	}
 
 	$this->router->lookup($request);
 
-	list($controller, $arguments) = $this->resolver->resolve($request, $type);
+	list($controller, $arguments) = $this->resolver->resolve($request);
 
 	$response = call_user_func_array($controller, $arguments);
 
-	$response = $this->responsePreparer->validateAndPrepare($response, $request, $type, $this);
-	$this->finishRequest($request, $type);
+	$response = $this->responsePreparer->validateAndPrepare($response, $request);
+	$this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
 	return $response;
       } catch (\Exception $e) {
 	if (false === $catch) {
-	  $this->finishRequest($request, $type);
+	  $this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
 
 	  throw $e;
 	}
 
-	return $this->handleException($e, $request, $type);
+	return $this->handleException($e, $request);
       }
     }
 
@@ -72,30 +72,30 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent(new NullHttpKernel(), $request, $response));
     }
 
-    private function prepareResponse(Response $response, Request $request, $type)
+    private function prepareResponse(Response $response, Request $request)
     {
-      $response = $this->responsePreparer->prepare($response, $request, $type, $this);
-      $this->finishRequest($request, $type);
+      $response = $this->responsePreparer->prepare($response, $request);
+      $this->finishRequest($request);
       return $response;
     }
 
-    private function finishRequest(Request $request, $type)
+    private function finishRequest(Request $request)
     {
-        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent(new NullHttpKernel(), $request, $type));
+        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST));
         $this->requestStack->pop();
     }
 
     // TODO: How I should refactor this awful piece of code?
-    private function handleException(\Exception $e, $request, $type)
+    private function handleException(\Exception $e, $request)
     {
-        $event = new GetResponseForExceptionEvent(new NullHttpKernel(), $request, $type, $e);
+        $event = new GetResponseForExceptionEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST, $e);
         $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
 
         // a listener might have replaced the exception
         $e = $event->getException();
 
         if (!$event->hasResponse()) {
-            $this->finishRequest($request, $type);
+            $this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
 
             throw $e;
         }
@@ -118,6 +118,6 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
             }
         }
 
-        return $this->prepareResponse($response, $request, $type);
+        return $this->prepareResponse($response, $request);
     }
 }

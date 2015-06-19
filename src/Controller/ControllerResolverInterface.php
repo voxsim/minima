@@ -6,5 +6,5 @@ use Symfony\Component\HttpFoundation\Request;
 
 interface ControllerResolverInterface
 {
-    public function resolve(Request $request, $type);
+    public function resolve(Request $request);
 }

@@ -2,11 +2,10 @@
 
 namespace Minima\Controller;
 
-use Minima\Kernel\NullHttpKernel;
+use Minima\Event\FilterControllerEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -19,11 +18,11 @@ class ControllerResolver implements ControllerResolverInterface
     $this->dispatcher = $dispatcher;
   }
 
-  public function resolve(Request $request, $type)
+  public function resolve(Request $request)
   {
     $controller = $this->getController($request);
 
-    $event = new FilterControllerEvent(new NullHttpKernel(), $controller, $request, $type);
+    $event = new FilterControllerEvent($controller, $request);
     $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
     $controller = $event->getController();
 
