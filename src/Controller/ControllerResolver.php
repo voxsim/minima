@@ -21,7 +21,7 @@ class ControllerResolver implements ControllerResolverInterface
   public function resolve(Request $request)
   {
     $controller = $this->getController($request);
-
+  
     $event = new FilterControllerEvent($controller, $request);
     $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
     $controller = $event->getController();
@@ -57,7 +57,17 @@ class ControllerResolver implements ControllerResolverInterface
       }
     }
 
-    $callable = $this->createController($controller);
+    if (false === strpos($controller, '::')) {
+      throw new \InvalidArgumentException(sprintf('Unable to find controller "%s".', $controller));
+    }
+
+    list($class, $method) = explode('::', $controller, 2);
+
+    if (!class_exists($class)) {
+      throw new \InvalidArgumentException(sprintf('Class "%s" does not exist.', $class));
+    }
+
+    $callable = array($this->instantiateController($class), $method);
 
     if (!is_callable($callable)) {
       throw new \InvalidArgumentException(sprintf('Controller "%s" for URI "%s" is not callable.', $controller, $request->getPathInfo()));
@@ -105,21 +115,6 @@ class ControllerResolver implements ControllerResolverInterface
     }
 
     return $arguments;
-  }
-
-  protected function createController($controller)
-  {
-    if (false === strpos($controller, '::')) {
-      throw new \InvalidArgumentException(sprintf('Unable to find controller "%s".', $controller));
-    }
-
-    list($class, $method) = explode('::', $controller, 2);
-
-    if (!class_exists($class)) {
-      throw new \InvalidArgumentException(sprintf('Class "%s" does not exist.', $class));
-    }
-
-    return array($this->instantiateController($class), $method);
   }
 
   protected function instantiateController($class)

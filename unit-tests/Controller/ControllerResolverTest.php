@@ -19,7 +19,7 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
    */
   public function testNotFoundController()
   {
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
   }
 
   /**
@@ -29,7 +29,7 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
   {
     $this->request->attributes->set('_controller', array());
 
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
   }
 
   public function testArrayController()
@@ -44,7 +44,7 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
 
     $this->request->attributes->set('_controller', $controller);
 
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
   }
 
   /**
@@ -56,7 +56,7 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
 
     $this->request->attributes->set('_controller', $controller);
 
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
   }
 
   public function testObjectControllerCallable()
@@ -71,12 +71,12 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
 
     $this->request->attributes->set('_controller', $controller);
 
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
   }
 
-  public function testStringControllerCallable()
+  public function testStringFunctionCallable()
   {
-    $controller = new controller();
+    $controller = 'method';
 
     $controllerEvent = function($_, $event) use($controller) {
       $event->setController($controller);
@@ -86,14 +86,100 @@ class ControllerResolverTest extends \PHPUnit_Framework_TestCase {
 
     $this->request->attributes->set('_controller', $controller);
 
-    $this->controllerResolver->resolve($this->request, HttpKernelInterface::MASTER_REQUEST);
+    $this->controllerResolver->resolve($this->request);
+  }
+
+  public function testStringControllerCallable()
+  {
+    $controller = 'controller';
+
+    $controllerEvent = function($_, $event) use($controller) {
+    };
+
+    $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::CONTROLLER, $this->anything())->willReturnCallBack($controllerEvent);
+
+    $this->request->attributes->set('_controller', $controller);
+
+    $this->controllerResolver->resolve($this->request);
+  }
+  
+  public function testStringControllerAndFunctionCallable()
+  {
+    $controller = 'controller::method';
+
+    $controllerEvent = function($_, $event) use($controller) {
+      $event->setController($controller);
+    };
+
+    $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::CONTROLLER, $this->anything())->willReturnCallBack($controller);
+
+    $this->request->attributes->set('_controller', $controller);
+
+    $this->controllerResolver->resolve($this->request);
+  }
+  
+  /**
+   * @expectedException InvalidArgumentException
+   */
+  public function testStringNotExistingControllerAndFunctionCallable()
+  {
+    $controller = 'controller_not_existed::method';
+
+    $controllerEvent = function($_, $event) use($controller) {
+      $event->setController($controller);
+    };
+
+    $this->request->attributes->set('_controller', $controller);
+
+    $this->controllerResolver->resolve($this->request);
+  }
+  
+  /**
+   * @expectedException InvalidArgumentException
+   */
+  public function testStringControllerAndFunctionUncallable()
+  {
+    $controller = 'controller::uncallable_method';
+
+    $controllerEvent = function($_, $event) use($controller) {
+      $event->setController($controller);
+    };
+
+    $this->request->attributes->set('_controller', $controller);
+
+    $this->controllerResolver->resolve($this->request);
+  }
+  
+  /**
+   * @expectedException InvalidArgumentException
+   */
+  public function testStringUncallableController()
+  {
+    $controller = 'uncallable_controller';
+
+    $controllerEvent = function($_, $event) use($controller) {
+      $event->setController($controller);
+    };
+
+    $this->request->attributes->set('_controller', $controller);
+
+    $this->controllerResolver->resolve($this->request);
   }
 }
 
 class controller {
+  private static function uncallable_method() {
+  }
+
   public static function method() {
   }
  
   public function __invoke() {
   }
+}
+
+class uncallable_controller {
+}
+
+function method() {
 }
