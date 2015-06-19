@@ -2,6 +2,8 @@
 namespace Minima\Kernel;
 
 use Minima\Controller\ControllerResolverInterface;
+use Minima\Event\GetResponseEvent;
+use Minima\Event\GetResponseForExceptionEvent;
 use Minima\Routing\RouterInterface;
 use Minima\Routing\NullRouter;
 use Minima\Response\ResponsePreparerInterface;
@@ -10,10 +12,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\TerminableInterface;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -40,11 +39,11 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
       try {
 	$this->requestStack->push($request);
 
-	$event = new GetResponseEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST);
+	$event = new GetResponseEvent($request);
 	$this->dispatcher->dispatch(KernelEvents::REQUEST, $event);
 
 	if ($event->hasResponse()) {
-	  return $this->prepareResponse($event->getResponse(), $request, HttpKernelInterface::MASTER_REQUEST);
+	  return $this->prepareResponse($event->getResponse(), $request);
 	}
 
 	$this->router->lookup($request);
@@ -54,11 +53,11 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 	$response = call_user_func_array($controller, $arguments);
 
 	$response = $this->responsePreparer->validateAndPrepare($response, $request);
-	$this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
+	$this->finishRequest($request);
 	return $response;
       } catch (\Exception $e) {
 	if (false === $catch) {
-	  $this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
+	  $this->finishRequest($request);
 
 	  throw $e;
 	}
@@ -88,14 +87,14 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
     // TODO: How I should refactor this awful piece of code?
     private function handleException(\Exception $e, $request)
     {
-        $event = new GetResponseForExceptionEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST, $e);
+        $event = new GetResponseForExceptionEvent($request, $e);
         $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
 
         // a listener might have replaced the exception
         $e = $event->getException();
 
         if (!$event->hasResponse()) {
-            $this->finishRequest($request, HttpKernelInterface::MASTER_REQUEST);
+            $this->finishRequest($request);
 
             throw $e;
         }
