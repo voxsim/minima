@@ -1,9 +1,9 @@
 <?php namespace Minima\Response;
 
+use Minima\Event\GetResponseForControllerResultEvent;
 use Minima\Event\FilterResponseEvent;
 use Minima\Kernel\NullHttpKernel;
 use Minima\Util\Stringify;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +37,7 @@ class ResponsePreparer implements ResponsePreparerInterface
   private function manageInvalidResponse($response, Request $request)
   {
     if (!$response instanceof Response) {
-      $event = new GetResponseForControllerResultEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST, $response);
+      $event = new GetResponseForControllerResultEvent($request, $response);
       $this->dispatcher->dispatch(KernelEvents::VIEW, $event);
 
       if ($event->hasResponse()) {

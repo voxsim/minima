@@ -2,8 +2,10 @@
 namespace Minima\Kernel;
 
 use Minima\Controller\ControllerResolverInterface;
+use Minima\Event\FinishRequestEvent;
 use Minima\Event\GetResponseEvent;
 use Minima\Event\GetResponseForExceptionEvent;
+use Minima\Event\PostResponseEvent;
 use Minima\Routing\RouterInterface;
 use Minima\Routing\NullRouter;
 use Minima\Response\ResponsePreparerInterface;
@@ -12,8 +14,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\TerminableInterface;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
-use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -68,7 +68,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     public function terminate(Request $request, Response $response)
     {
-        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent(new NullHttpKernel(), $request, $response));
+        $this->dispatcher->dispatch(KernelEvents::TERMINATE, new PostResponseEvent($request, $response));
     }
 
     private function prepareResponse(Response $response, Request $request)
@@ -80,7 +80,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     private function finishRequest(Request $request)
     {
-        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent(new NullHttpKernel(), $request, HttpKernelInterface::MASTER_REQUEST));
+        $this->dispatcher->dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent($request));
         $this->requestStack->pop();
     }
 
