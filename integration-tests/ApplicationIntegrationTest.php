@@ -1,9 +1,8 @@
 <?php
 
-require_once __DIR__.'/../vendor/autoload.php';
-
 use Minima\Builder\TwigBuilder;
 use Psr\Log\LoggerInterface;
+use Minima\Security\NativeSessionTokenStorage;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -12,67 +11,45 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
-class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
-  private $application;
-  private $logger;
+abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
+  protected $application;
+  protected $logger;
 
-  public function __construct()
+  public static function setUpBeforeClass()
   {
+    ini_set('session.save_handler', 'files');
+    ini_set('session.save_path', sys_get_temp_dir());
+
+    parent::setUpBeforeClass();
+  }
+
+  public function setUp()
+  {
+    $_SESSION = array();
+
     $this->logger = new TestLogger();
 
-    $this->application = $this->createApplication($this->logger);
-  }
-
-  public function testNotFoundHandling()
-  {
-    $response = $this->application->handle(new Request());
-
-    $this->assertEquals('Something went wrong! (No route found for "GET /")', $response->getContent());
+    $this->application = $this->createApplication($this->logger, $this->getDebugFlag());
   }
   
-  public function testRoute()
-  {
-    $request = Request::create('/hello/Simon');
+  abstract protected function getDebugFlag();
 
-    $response = $this->application->handle($request);
-
-    $this->assertEquals('Hello Simon', $response->getContent());
-  }
-
-  public function testTwig()
-  {
-    $request = Request::create('/twig_hello/Simon');
-
-    $response = $this->application->handle($request);
-
-    $this->assertEquals('Hello Simon' . "\n", $response->getContent());
-  }
-  
-  public function testCaching()
-  {
-    $request = Request::create('/rand_hello/Simon');
-
-    $response1 = $this->application->handle($request);
-    $response2 = $this->application->handle($request);
-
-    $this->assertEquals($response1->getContent(), $response2->getContent());
-  }
-  
-  public function testLogging()
-  {
-    $request = Request::create('/log_hello/Simon');
-
-    $this->application->handle($request);
-    $messages = $this->logger->getMessages();
-
-    $this->assertEquals('Message from controller', $messages[0][1]);
-  }
-
-  private function createApplication(LoggerInterface $logger)
+  protected function createApplication(LoggerInterface $logger, $debug = true)
   {
     $configuration = array(
+			  'debug' => $debug,
 			  'twig.path' => __DIR__.'/views',
 			  'cache.path' =>  __DIR__.'/cache',
+			  'security.firewalls' => array(
+			    'admin' => array(
+			      'pattern' => '^/secured_hello',
+			      'http' => true,
+			      'users' => array(
+				// raw password is foo
+				'Simon' => array('ROLE_ADMIN', '5FZ2Z8QIkA7UTZ4BYkoC+GsReLf569mSKDsfods6LYQ8t+a8EW9oaircfMpmaLbPBh4FOBiiFyLfuZmTSUwzZg=='),
+			      )
+			    )
+			  )
 			);
 
     $dispatcher = new EventDispatcher();
@@ -112,6 +89,27 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
         $logger->info('Message from controller'); 
       }
     )));
+
+   $routeCollection->add('secured_hello', new route('/secured_hello', array(
+     '_controller' => function() {
+	$tokenStorage = new NativeSessionTokenStorage('minima');
+	$token = $tokenStorage->getToken();
+	$name = 'unknown user';
+
+	if (null !== $token) {
+	    $user = $token->getUser();
+	    $name = $user->getUsername();                   
+	}
+
+	return 'Hello ' . $name;
+       }
+   )));
+
+   $routeCollection->add('unsecured_hello', new route('/unsecured_hello', array(
+     '_controller' => function() {
+	return 'Hello anonymous access';
+     }
+   )));
 
     return $routeCollection;
   }

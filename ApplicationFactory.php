@@ -8,6 +8,7 @@ use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
 use Minima\Listener\StringToResponseListener;
 use Minima\Routing\Router;
+use Minima\Security\NativeSessionTokenStorage;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,10 +19,9 @@ use Symfony\Component\HttpKernel\HttpCache\Store;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ApplicationFactory {
-  public static function build(EventDispatcherInterface $dispatcher, RouteCollection $routeCollection, $configuration = array(), TokenStorageInterface $tokenStorage) {
+  public static function build(EventDispatcherInterface $dispatcher, RouteCollection $routeCollection, $configuration = array()) {
     $defaultConfiguration = array(
 			      'debug' => false,
 			    );
@@ -33,26 +33,26 @@ class ApplicationFactory {
     $resolver = new ControllerResolver($dispatcher);
 
     if(isset($configuration['debug']) && $configuration['debug'])
-      return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $tokenStorage);
+      return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
-    return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $tokenStorage);
+    return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger);
   }
 
-  private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $tokenStorage) {
+  private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger) {
     $defaultConfiguration = array(
 			      'cache.path' =>  __DIR__.'/../cache',
 			      'cache.page' => 10,
 			    );
     $configuration = array_merge($defaultConfiguration, $configuration);
 
-    $httpKernel = static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $tokenStorage);
+    $httpKernel = static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
 
     $dispatcher->addSubscriber(new ExceptionListener());
 
     return new HttpCache($httpKernel, new Store($configuration['cache.path']), null, array('default_ttl' => $configuration['cache.page']));
   }
 
-  private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $tokenStorage) {
+  private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger) {
     $defaultConfiguration = array('charset' => 'UTF-8');
     $configuration = array_merge($defaultConfiguration, $configuration);
     
@@ -60,6 +60,7 @@ class ApplicationFactory {
     $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
     $dispatcher->addSubscriber(new StringToResponseListener);
 
+    $tokenStorage = new NativeSessionTokenStorage('minima');
     $firewall = FirewallMapBuilder::build($configuration, $logger, $tokenStorage, $dispatcher);
     $dispatcher->addSubscriber($firewall);
 
