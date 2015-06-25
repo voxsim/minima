@@ -10,6 +10,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
 class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
   private $application;
@@ -75,8 +76,9 @@ class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 			);
 
     $dispatcher = new EventDispatcher();
+    $tokenStorage = new TokenStorage();
     $routeCollection = $this->createRouteCollection($configuration, $this->logger);
-    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration);
+    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration, $tokenStorage);
   }
 
   public function createRouteCollection(array $configuration, LoggerInterface $logger) {

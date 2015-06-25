@@ -1,3 +1,4 @@
+*.swp
 composer.lock
 minima.log
 vendor/*

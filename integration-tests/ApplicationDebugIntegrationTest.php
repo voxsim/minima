@@ -3,23 +3,37 @@
 require_once __DIR__.'/../vendor/autoload.php';
 
 use Minima\Builder\TwigBuilder;
+use Minima\Event\EventDispatcher;
+use Minima\Security\NativeSessionTokenStorage;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
+  const SESSION_NAMESPACE = 'minima';
+
   private $application;
   private $logger;
 
-  public function __construct()
+  public static function setUpBeforeClass()
   {
-    $this->logger = new TestLogger();
+    ini_set('session.save_handler', 'files');
+    ini_set('session.save_path', sys_get_temp_dir());
 
-    $this->application = $this->createApplication($this->logger);
+    parent::setUpBeforeClass();
+  }
+
+  protected function setUp()
+  {
+    $_SESSION = array();
+
+    $this->storage = new NativeSessionTokenStorage(self::SESSION_NAMESPACE);
+    $this->logger = new TestLogger();
+    $this->application = $this->createApplication($this->logger, $this->storage);
   }
 
   public function testNotFoundHandling()
@@ -69,21 +83,60 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
 
     $this->assertEquals('Message from controller', $messages[0][1]);
   }
-
-  private function createApplication(LoggerInterface $logger)
+  
+  public function testUnsecuredPath()
   {
-    $configuration = array(
-			  'debug' => true,
-			  'twig.path' => __DIR__.'/views',
-			  'cache.path' =>  __DIR__.'/cache',
-			);
+    $request = Request::create('/unsecured_hello');
 
-    $dispatcher = new EventDispatcher();
-    $routeCollection = $this->createRouteCollection($configuration, $this->logger);
-    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration);
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('Hello anonymous access', $response->getContent());
   }
 
-  public function createRouteCollection(array $configuration, LoggerInterface $logger) {
+  public function testSecuredPath()
+  {
+    $request = Request::create('/secured_hello');
+    $request->headers->set('PHP_AUTH_USER', 'Simon');
+    $request->headers->set('PHP_AUTH_PW', 'foo');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('Hello Simon', $response->getContent());
+  }
+
+  public function testBlockUnknownUserForSecuredPath()
+  {
+    $request = Request::create('/secured_hello');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('401', $response->getStatusCode());
+  }
+
+  private function createApplication(LoggerInterface $logger, TokenStorageInterface $tokenStorage)
+  {
+    $configuration = array(
+      'debug' => true,
+      'twig.path' => __DIR__.'/views',
+      'cache.path' =>  __DIR__.'/cache',
+      'security.firewalls' => array(
+	'admin' => array(
+	  'pattern' => '^/secured_hello',
+	  'http' => true,
+	  'users' => array(
+	    // raw password is foo
+	    'Simon' => array('ROLE_ADMIN', '5FZ2Z8QIkA7UTZ4BYkoC+GsReLf569mSKDsfods6LYQ8t+a8EW9oaircfMpmaLbPBh4FOBiiFyLfuZmTSUwzZg=='),
+	  )
+	)
+      )
+    );
+
+    $dispatcher = new EventDispatcher();
+    $routeCollection = $this->createRouteCollection($configuration, $this->logger, $tokenStorage);
+    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration, $tokenStorage);
+  }
+
+  public function createRouteCollection(array $configuration, LoggerInterface $logger, TokenStorageInterface $tokenStorage) {
     $routeCollection = new RouteCollection();
 
     $routeCollection->add('hello', new route('/hello/{name}', array(
@@ -112,6 +165,27 @@ class ApplicationDebugIntegrationTest extends \PHPUnit_Framework_TestCase {
       'name' => 'world',
       '_controller' => function($name) use($logger) {
         $logger->info('Message from controller'); 
+      }
+    )));
+    
+    $routeCollection->add('secured_hello', new route('/secured_hello', array(
+      '_controller' => function() {
+	$tokenStorage = new NativeSessionTokenStorage('minima');
+	$token = $tokenStorage->getToken();
+	$name = 'unknown user';
+
+	if (null !== $token) {
+	    $user = $token->getUser();
+	    $name = $user->getUsername();	    	    
+	}
+
+	return 'Hello ' . $name;
+      }
+    )));
+
+    $routeCollection->add('unsecured_hello', new route('/unsecured_hello', array(
+      '_controller' => function() {
+	return 'Hello anonymous access';
       }
     )));
 
