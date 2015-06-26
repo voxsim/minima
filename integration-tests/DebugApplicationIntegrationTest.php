@@ -55,36 +55,4 @@ class DebugApplicationIntegrationTest extends ApplicationIntegrationTest {
 
     $this->assertEquals('Message from controller', $messages[0][1]);
   }
-  
-  public function testUnsecuredPath()
-  {
-    $request = Request::create('/unsecured_hello');
-
-    $response = $this->application->handle($request);
-
-    $this->assertEquals('Hello anonymous access', $response->getContent());
-  }
-
-  public function testSecuredPath()
-  {
-    $request = Request::create('/secured_hello');
-    $request->headers->set('PHP_AUTH_USER', 'Simon');
-    $request->headers->set('PHP_AUTH_PW', 'foo');
-
-    $response = $this->application->handle($request);
-
-    $this->assertEquals('Hello Simon', $response->getContent());
-  }
-
-  /**
-   * @expectedException \Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException
-   */
-  public function testBlockUnknownUserForSecuredPath()
-  {
-    $request = Request::create('/secured_hello');
-
-    $response = $this->application->handle($request);
-
-    $this->assertEquals('401', $response->getStatusCode());
-  }
 }

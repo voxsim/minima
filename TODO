@@ -1,4 +1,6 @@
-- database
-- manage users
 - manage sessions
+- manage users
 - filtering on routing
+- caching
+
+- database

@@ -90,27 +90,6 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
       }
     )));
 
-   $routeCollection->add('secured_hello', new route('/secured_hello', array(
-     '_controller' => function() {
-	$tokenStorage = new NativeSessionTokenStorage('minima');
-	$token = $tokenStorage->getToken();
-	$name = 'unknown user';
-
-	if (null !== $token) {
-	    $user = $token->getUser();
-	    $name = $user->getUsername();                   
-	}
-
-	return 'Hello ' . $name;
-       }
-   )));
-
-   $routeCollection->add('unsecured_hello', new route('/unsecured_hello', array(
-     '_controller' => function() {
-	return 'Hello anonymous access';
-     }
-   )));
-
     return $routeCollection;
   }
 }
