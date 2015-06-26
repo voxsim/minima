@@ -39,17 +39,9 @@ class ApplicationFactory {
   }
 
   private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger) {
-    $defaultConfiguration = array(
-			      'cache.path' =>  __DIR__.'/../cache',
-			      'cache.page' => 10,
-			    );
-    $configuration = array_merge($defaultConfiguration, $configuration);
-
-    $httpKernel = static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
-
     $dispatcher->addSubscriber(new ExceptionListener());
 
-    return new HttpCache($httpKernel, new Store($configuration['cache.path']), null, array('default_ttl' => $configuration['cache.page']));
+    return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
   }
 
   private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger) {

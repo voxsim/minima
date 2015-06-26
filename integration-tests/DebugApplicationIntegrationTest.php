@@ -46,16 +46,6 @@ class DebugApplicationIntegrationTest extends ApplicationIntegrationTest {
     $this->assertEquals('Hello Simon' . "\n", $response->getContent());
   }
   
-  public function testCaching()
-  {
-    $request = Request::create('/rand_hello/Simon');
-
-    $response1 = $this->application->handle($request);
-    $response2 = $this->application->handle($request);
-
-    $this->assertNotEquals($response1->getContent(), $response2->getContent());
-  }
-  
   public function testLogging()
   {
     $request = Request::create('/log_hello/Simon');
@@ -86,10 +76,11 @@ class DebugApplicationIntegrationTest extends ApplicationIntegrationTest {
     $this->assertEquals('Hello Simon', $response->getContent());
   }
 
+  /**
+   * @expectedException \Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException
+   */
   public function testBlockUnknownUserForSecuredPath()
   {
-    var_dump($_SESSION);
-
     $request = Request::create('/secured_hello');
 
     $response = $this->application->handle($request);

@@ -17,7 +17,6 @@ use Symfony\Component\Security\Http\Firewall\BasicAuthenticationListener;
 use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 use Symfony\Component\Security\Http\HttpUtils;
-use Symfony\Component\Security\Http\Firewall\ExceptionListener;
 use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleHierarchyVoter;
 use Symfony\Component\Security\Core\Role\RoleHierarchy;
@@ -102,17 +101,6 @@ class FirewallMapBuilder {
                     $logger
                 );
 
-	  $exceptionListener = new ExceptionListener(
-                    $tokenStorage,
-                    $trustResolver,
-                    $httpUtils,
-                    $providerKey,
-                    $entryPoint,
-                    null, // errorPage
-                    null, // accessDeniedHandler
-                    $logger
-                );
-
           $listeners[] = new AccessListener($tokenStorage, $accessDecisionManager, $accessMap, $authenticationManager);
 	}
 
@@ -124,7 +112,7 @@ class FirewallMapBuilder {
 	$map->add(
 	    is_string($config['pattern']) ? new RequestMatcher($config['pattern']) : $config['pattern'],
 	    $config['listeners'],
-            $config['exception-listener']
+            null 
 	);
     }
 

@@ -42,16 +42,6 @@ class ProductionApplicationIntegrationTest extends ApplicationIntegrationTest {
     $this->assertEquals('Hello Simon' . "\n", $response->getContent());
   }
   
-  public function testCaching()
-  {
-    $request = Request::create('/rand_hello/Simon');
-
-    $response1 = $this->application->handle($request);
-    $response2 = $this->application->handle($request);
-
-    $this->assertEquals($response1->getContent(), $response2->getContent());
-  }
-  
   public function testLogging()
   {
     $request = Request::create('/log_hello/Simon');
@@ -87,7 +77,7 @@ class ProductionApplicationIntegrationTest extends ApplicationIntegrationTest {
     $request = Request::create('/secured_hello');
 
     $response = $this->application->handle($request);
-
-    $this->assertEquals('Something went wrong! (No route found for "GET /")', $response->getContent());
+ 
+    $this->assertEquals('Access Denied!', $response->getContent());
   }
 }
