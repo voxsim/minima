@@ -1,5 +1,6 @@
 {
-	"license": "MIT",
+	"name": "voxsim/minima",
+	"description": "A minimal and clean php framework based on Symfony",
 	"require": {
 		"symfony/class-loader": "2.7.*",
 		"symfony/http-foundation": "2.7.*",
@@ -21,5 +22,6 @@
 	"config": {
 		"preferred-install": "dist"
 	},
-	"minimum-stability": "stable"
+	"minimum-stability": "stable",
+	"license": "MIT"
 }
