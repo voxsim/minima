@@ -2,66 +2,49 @@
 
 use Minima\Builder\TwigBuilder;
 use Psr\Log\LoggerInterface;
-use Minima\Security\NativeSessionTokenStorage;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorage;
 
 abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
   protected $application;
   protected $logger;
-
-  public static function setUpBeforeClass()
-  {
-    ini_set('session.save_handler', 'files');
-    ini_set('session.save_path', sys_get_temp_dir());
-
-    parent::setUpBeforeClass();
-  }
+  protected $session;
 
   public function setUp()
   {
-    $_SESSION = array();
+    $sessionStorage = new MockFileSessionStorage();
+    $this->session = new Session($sessionStorage);
 
     $this->logger = new TestLogger();
 
     $this->application = $this->createApplication($this->logger, $this->getDebugFlag());
   }
-  
+
   abstract protected function getDebugFlag();
 
   protected function createApplication(LoggerInterface $logger, $debug = true)
   {
     $configuration = array(
-			  'debug' => $debug,
-			  'twig.path' => __DIR__.'/views',
-			  'cache.path' =>  __DIR__.'/cache',
-			  'security.firewalls' => array(
-			    'admin' => array(
-			      'pattern' => '^/secured_hello',
-			      'http' => true,
-			      'users' => array(
-				// raw password is foo
-				'Simon' => array('ROLE_ADMIN', '5FZ2Z8QIkA7UTZ4BYkoC+GsReLf569mSKDsfods6LYQ8t+a8EW9oaircfMpmaLbPBh4FOBiiFyLfuZmTSUwzZg=='),
-			      )
-			    )
-			  )
-			);
+			'debug' => $debug,
+			'twig.path' => __DIR__.'/views',
+		     );
 
     $dispatcher = new EventDispatcher();
-    $tokenStorage = new TokenStorage();
     $routeCollection = $this->createRouteCollection($configuration, $this->logger);
-    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration, $tokenStorage);
+    return ApplicationFactory::build($dispatcher, $routeCollection, $configuration);
   }
 
   public function createRouteCollection(array $configuration, LoggerInterface $logger) {
     $routeCollection = new RouteCollection();
 
-    $routeCollection->add('hello', new route('/hello/{name}', array(
+    $routeCollection->add('hello', new Route('/hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
 	return 'Hello ' . $name;
@@ -76,20 +59,119 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
       }
     )));
 
-    $routeCollection->add('rand_hello', new route('/rand_hello/{name}', array(
+    $routeCollection->add('rand_hello', new Route('/rand_hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) { 
 	return 'Hello ' . $name . ' ' . rand();
       }
     )));
 
-    $routeCollection->add('log_hello', new route('/log_hello/{name}', array(
+    $routeCollection->add('log_hello', new Route('/log_hello/{name}', array(
       'name' => 'world',
       '_controller' => function($name) use($logger) {
         $logger->info('Message from controller'); 
       }
     )));
 
+    $routeCollection->add('login', new Route('/login', array(
+      '_controller' => function(Request $request, Session $session) {
+	$username = $request->server->get('PHP_AUTH_USER', false);
+	$password = $request->server->get('PHP_AUTH_PW');
+
+	if ('Simon' === $username && 'password' === $password) {
+	    $session->set('user', array('username' => $username));
+	    return new RedirectResponse('/account');
+	}
+
+	$response = new Response();
+	$response->headers->set('WWW-Authenticate', sprintf('Basic realm="%s"', 'site_login'));
+	$response->setStatusCode(401, 'Please sign in.');
+	return $response;
+      },
+      'session' => $this->session
+    )));
+
+    $routeCollection->add('account', new Route('/account', array(
+      '_controller' => function(Session $session) {
+	if (null === $user = $session->get('user')) {
+	    return new RedirectResponse('/login');
+	}
+
+	return "Welcome {$user['username']}!";
+      },
+      'session' => $this->session
+    )));
+
     return $routeCollection;
+  }
+
+  public function testRoute()
+  {
+    $request = Request::create('/hello/Simon');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('Hello Simon', $response->getContent());
+  }
+
+  public function testTwig()
+  {
+    $request = Request::create('/twig_hello/Simon');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('Hello Simon' . "\n", $response->getContent());
+  }
+
+  public function testLogging()
+  {
+    $request = Request::create('/log_hello/Simon');
+
+    $this->application->handle($request);
+    $messages = $this->logger->getMessages();
+
+    $this->assertEquals('Message from controller', $messages[0][1]);
+  }
+
+  public function testShowMeBasicAuthentication()
+  {
+    $request = Request::create('/login');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals(401, $response->getStatusCode());
+  }
+
+  public function testRedirectToAccount()
+  {
+    $request = Request::create('/login');
+    $request->server->set('PHP_AUTH_USER', 'Simon');
+    $request->server->set('PHP_AUTH_PW', 'password');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals(302, $response->getStatusCode());
+
+    $this->assertTrue($this->containsString($response->getContent(), 'Redirecting to /account'));
+
+    $request = Request::create($response->getTargetUrl());
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals('Welcome Simon!', $response->getContent());
+  }
+
+  public function testRedirectToLoginIfNotLogged()
+  {
+    $request = Request::create('/account');
+
+    $response = $this->application->handle($request);
+
+    $this->assertEquals(302, $response->getStatusCode());
+    $this->assertTrue($this->containsString($response->getContent(), 'Redirecting to /login'));
+  }
+
+  private function containsString($string, $substring) {
+    return strpos($string, $substring) > 0;
   }
 }

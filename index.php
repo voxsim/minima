@@ -6,6 +6,8 @@ use Minima\Builder\DatabaseBuilder;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
 // Configuration
 $configuration = array();
@@ -13,7 +15,9 @@ $configuration = array();
 // Stateful Componenents
 $dispatcher = new EventDispatcher();
 
-// Database
+$storage = new NativeSessionStorage();
+$session = new Session($storage);
+
 $database = DatabaseBuilder::getConnection();
 
 // Loading routes
