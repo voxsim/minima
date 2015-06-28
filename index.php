@@ -3,20 +3,15 @@
 require_once __DIR__.'/bootstrap.php';
 
 use Minima\Builder\DatabaseBuilder;
+use Minima\Http\Request;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
 // Configuration
 $configuration = array();
 
 // Stateful Componenents
 $dispatcher = new EventDispatcher();
-
-$storage = new NativeSessionStorage();
-$session = new Session($storage);
 
 $database = DatabaseBuilder::getConnection();
 

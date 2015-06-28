@@ -1,27 +1,21 @@
 <?php
 
 use Minima\Builder\TwigBuilder;
+use Minima\Http\Request;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorage;
 
 abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
   protected $application;
   protected $logger;
-  protected $session;
 
   public function setUp()
   {
-    $sessionStorage = new MockFileSessionStorage();
-    $this->session = new Session($sessionStorage);
-
     $this->logger = new TestLogger();
 
     $this->application = $this->createApplication($this->logger, $this->getDebugFlag());
@@ -74,12 +68,12 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
     )));
 
     $routeCollection->add('login', new Route('/login', array(
-      '_controller' => function(Request $request, Session $session) {
+      '_controller' => function(Request $request) {
 	$username = $request->server->get('PHP_AUTH_USER', false);
 	$password = $request->server->get('PHP_AUTH_PW');
 
 	if ('Simon' === $username && 'password' === $password) {
-	    $session->set('user', array('username' => $username));
+	    $request->getSession()->set('user', array('username' => $username));
 	    return new RedirectResponse('/account');
 	}
 
@@ -87,19 +81,17 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 	$response->headers->set('WWW-Authenticate', sprintf('Basic realm="%s"', 'site_login'));
 	$response->setStatusCode(401, 'Please sign in.');
 	return $response;
-      },
-      'session' => $this->session
+      }
     )));
 
     $routeCollection->add('account', new Route('/account', array(
-      '_controller' => function(Session $session) {
-	if (null === $user = $session->get('user')) {
+      '_controller' => function(Request $request) {
+	if (null === $user = $request->getSession()->get('user')) {
 	    return new RedirectResponse('/login');
 	}
 
 	return "Welcome {$user['username']}!";
-      },
-      'session' => $this->session
+      }
     )));
 
     return $routeCollection;
@@ -154,8 +146,8 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase {
 
     $this->assertTrue($this->containsString($response->getContent(), 'Redirecting to /account'));
 
-    $request = Request::create($response->getTargetUrl());
-
+    $request = Request::create($response->getTargetUrl(), 'GET', array(), array(), array(), array(), null, $request->getSession());
+    
     $response = $this->application->handle($request);
 
     $this->assertEquals('Welcome Simon!', $response->getContent());
