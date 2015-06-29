@@ -2,14 +2,21 @@
 
 namespace Minima\Listener;
 
+use Minima\Http\ResponseMaker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Debug\Exception\FlattenException;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 class ExceptionListener implements EventSubscriberInterface
 {
+    private $responseMaker;
+
+    public function __construct(ResponseMaker $responseMaker)
+    {
+        $this->responseMaker = $responseMaker;
+    }
+
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
         $exception = $event->getException();
@@ -21,7 +28,7 @@ class ExceptionListener implements EventSubscriberInterface
             $msg = 'Something went wrong! ('.$flattenException->getMessage().')';
         }
 
-        $event->setResponse(new Response($msg, $flattenException->getStatusCode()));
+        $event->setResponse($this->responseMaker->create($msg, $flattenException->getStatusCode()));
     }
 
     public static function getSubscribedEvents()

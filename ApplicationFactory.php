@@ -3,6 +3,7 @@
 use Minima\Builder\LoggerBuilder;
 use Minima\Controller\ControllerResolver;
 use Minima\Kernel\HttpKernel;
+use Minima\Http\ResponseMaker;
 use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
 use Minima\Listener\StringToResponseListener;
@@ -27,22 +28,23 @@ class ApplicationFactory
         $matcher = new UrlMatcher($routeCollection, new RequestContext());
         $router = new Router($matcher, $logger);
         $resolver = new ControllerResolver($dispatcher);
+        $responseMaker = new ResponseMaker();
 
         if (isset($configuration['debug']) && $configuration['debug']) {
-            return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
+            return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
         }
 
-        return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger);
+        return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
     }
 
-    private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger)
+    private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker)
     {
-        $dispatcher->addSubscriber(new ExceptionListener());
+        $dispatcher->addSubscriber(new ExceptionListener($responseMaker));
 
-        return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger);
+        return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
     }
 
-    private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger)
+    private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker)
     {
         $defaultConfiguration = array('charset' => 'UTF-8');
         $configuration = array_merge($defaultConfiguration, $configuration);
