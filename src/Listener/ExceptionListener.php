@@ -10,24 +10,24 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 class ExceptionListener implements EventSubscriberInterface
 {
-  public function onKernelException(GetResponseForExceptionEvent $event)
-  {
-    $exception = $event->getException();
-    $flattenException = FlattenException::create($exception);
+    public function onKernelException(GetResponseForExceptionEvent $event)
+    {
+        $exception = $event->getException();
+        $flattenException = FlattenException::create($exception);
 
-    if($exception instanceof \Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException){
-      $msg = 'Access Denied!';
-    } else { 
-      $msg = 'Something went wrong! ('.$flattenException->getMessage().')';
+        if ($exception instanceof \Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException) {
+            $msg = 'Access Denied!';
+        } else {
+            $msg = 'Something went wrong! ('.$flattenException->getMessage().')';
+        }
+
+        $event->setResponse(new Response($msg, $flattenException->getStatusCode()));
     }
-    
-    $event->setResponse(new Response($msg, $flattenException->getStatusCode()));
-  }
 
-  public static function getSubscribedEvents()
-  {
-    return array(
-      KernelEvents::EXCEPTION => array('onKernelException', -128),
-    );
-  }
+    public static function getSubscribedEvents()
+    {
+        return array(
+            KernelEvents::EXCEPTION => array('onKernelException', -128)
+        );
+    }
 }

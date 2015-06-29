@@ -1,24 +1,28 @@
-<?php namespace Minima\Builder;
+<?php
 
-class TwigBuilder extends \Twig_Environment {
-  public static function build($configuration = array()) {
-    $defaultConfiguration = array(
-			      'debug' => false,
-			      'charset' => 'UTF-8',
-			      'twig.path' => __DIR__.'/../views'
-			    );
-    $configuration = array_merge($defaultConfiguration, $configuration);
+namespace Minima\Builder;
 
-    $filesystem = new \Twig_Loader_Filesystem($configuration['twig.path']);
-    $loaderArray = new \Twig_Loader_Array(array());
-    $loader = new \Twig_Loader_Chain(array($loaderArray, $filesystem));
+class TwigBuilder
+{
+    public static function build($configuration = array())
+    {
+        $defaultConfiguration = array(
+                  'debug' => false,
+                  'charset' => 'UTF-8',
+                  'twig.path' => __DIR__.'/../views',
+                );
+        $configuration = array_merge($defaultConfiguration, $configuration);
 
-    $options = array(
-	'charset'          => $configuration['charset'],
-	'debug'            => $configuration['debug'],
-	'strict_variables' => $configuration['debug']
-    );
+        $filesystem = new \Twig_Loader_Filesystem($configuration['twig.path']);
+        $loaderArray = new \Twig_Loader_Array(array());
+        $loader = new \Twig_Loader_Chain(array($loaderArray, $filesystem));
 
-    return new TwigBuilder($loader, $options);
-  }
+        $options = array(
+            'charset' => $configuration['charset'],
+            'debug' => $configuration['debug'],
+            'strict_variables' => $configuration['debug'],
+        );
+
+        return new \Twig_Environment($loader, $options);
+    }
 }
