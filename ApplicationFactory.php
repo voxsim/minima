@@ -21,6 +21,7 @@ class ApplicationFactory
     {
         $defaultConfiguration = array(
                   'debug' => false,
+                  'charset' => 'UTF-8'
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 
@@ -51,7 +52,7 @@ class ApplicationFactory
 
         $dispatcher->addSubscriber(new LogListener($logger));
         $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
-        $dispatcher->addSubscriber(new StringToResponseListener());
+        $dispatcher->addSubscriber(new StringToResponseListener($responseMaker));
 
         return new HttpKernel($dispatcher, $resolver, new RequestStack(), $router);
     }
