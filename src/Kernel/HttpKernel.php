@@ -26,13 +26,19 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
     protected $resolver;
     protected $requestStack;
 
-    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, RouterInterface $router = null, ResponsePreparerInterface $responsePreparer = null)
+    public function __construct(
+        EventDispatcherInterface $dispatcher,
+        ControllerResolverInterface $resolver,
+        RequestStack $requestStack = null,
+        RouterInterface $router = null,
+        ResponsePreparerInterface $responsePreparer = null
+    )
     {
         $this->dispatcher = $dispatcher;
         $this->resolver = $resolver;
-        $this->requestStack = $requestStack == null ? new RequestStack() : $requestStack;
-        $this->router = $router == null ? new NullRouter() : $router;
-        $this->responsePreparer = $responsePreparer == null ? new ResponsePreparer($dispatcher) : $responsePreparer;
+        $this->requestStack = $requestStack === null ? new RequestStack() : $requestStack;
+        $this->router = $router === null ? new NullRouter() : $router;
+        $this->responsePreparer = $responsePreparer === null ? new ResponsePreparer($dispatcher) : $responsePreparer;
     }
 
     public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
@@ -90,8 +96,8 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
       $event = new GetResponseForExceptionEvent($request, $exception);
       $this->dispatcher->dispatch(KernelEvents::EXCEPTION, $event);
 
-    // a listener might have replaced the exception
-    $exception = $event->getException();
+      // a listener might have replaced the exception
+      $exception = $event->getException();
 
       if (!$event->hasResponse()) {
           $this->finishRequest($request);
@@ -101,20 +107,20 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
       $response = $event->getResponse();
 
-    // the developer asked for a specific status code
-    if ($response->headers->has('X-Status-Code')) {
-        $response->setStatusCode($response->headers->get('X-Status-Code'));
-        $response->headers->remove('X-Status-Code');
-    } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
-        // ensure that we actually have an error response
-    if ($exception instanceof HttpExceptionInterface) {
-        // keep the HTTP status code and headers
-        $response->setStatusCode($exception->getStatusCode());
-        $response->headers->add($exception->getHeaders());
-    } else {
-        $response->setStatusCode(500);
-    }
-    }
+      // the developer asked for a specific status code
+      if ($response->headers->has('X-Status-Code')) {
+          $response->setStatusCode($response->headers->get('X-Status-Code'));
+          $response->headers->remove('X-Status-Code');
+      } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
+          // ensure that we actually have an error response
+          if ($exception instanceof HttpExceptionInterface) {
+              // keep the HTTP status code and headers
+              $response->setStatusCode($exception->getStatusCode());
+              $response->headers->add($exception->getHeaders());
+          } else {
+              $response->setStatusCode(500);
+          }
+      }
 
       return $this->prepareResponse($response, $request);
   }
