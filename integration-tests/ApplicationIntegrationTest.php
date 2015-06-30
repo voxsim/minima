@@ -2,11 +2,11 @@
 
 use Minima\Builder\TwigBuilder;
 use Minima\Http\Request;
+use Minima\Http\Response;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
@@ -71,38 +71,32 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         )));
 
         $routeCollection->add('login', new Route('/login', array(
-            '_controller' => function (Request $request, Response $response, $redirect) {
+            '_controller' => function (Request $request, Response $response) {
                 $username = $request->server->get('PHP_AUTH_USER', false);
                 $password = $request->server->get('PHP_AUTH_PW');
 
                 if ('Simon' === $username && 'password' === $password) {
                     $request->getSession()->set('user', array('username' => $username));
-
-                    $redirect->setTargetUrl('/account');
-                    return $redirect;
+                    return $response->redirect('/account');
                 }
 
                 $response->headers->set('WWW-Authenticate', sprintf('Basic realm="%s"', 'site_login'));
                 $response->setStatusCode(401, 'Please sign in.');
-
                 return $response;
             },
-            'response' => new Response,
-            'redirect' => new RedirectResponse('invalid')
+            'response' => new Response
         )));
 
         $routeCollection->add('account', new Route('/account', array(
-            '_controller' => function (Request $request, Response $response, $redirect) {
+            '_controller' => function (Request $request, Response $response) {
                 if (null === $user = $request->getSession()->get('user')) {
-                    $redirect->setTargetUrl('/login');
-                    return $redirect;
+                    return $response->redirect('/login');
                 }
 
                 $response->setContent("Welcome {$user['username']}!");
                 return $response;
             },
-            'response' => new Response,
-            'redirect' => new RedirectResponse('invalid')
+            'response' => new Response
         )));
 
         return $routeCollection;
@@ -157,7 +151,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($this->containsString($response->getContent(), 'Redirecting to /account'));
 
-        $request = Request::create($response->getTargetUrl(), 'GET', array(), array(), array(), array(), null, $request->getSession());
+        $request = Request::create($response->headers->get('Location'), 'GET', array(), array(), array(), array(), null, $request->getSession());
 
         $response = $this->application->handle($request);
 

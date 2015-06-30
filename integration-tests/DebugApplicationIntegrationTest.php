@@ -1,6 +1,6 @@
 <?php
 
-use Symfony\Component\HttpFoundation\Request;
+use Minima\Http\Request;
 
 class DebugApplicationIntegrationTest extends ApplicationIntegrationTest
 {
@@ -12,7 +12,7 @@ class DebugApplicationIntegrationTest extends ApplicationIntegrationTest
     public function testNotFoundHandling()
     {
         try {
-            $response = $this->application->handle(new Request());
+            $response = $this->application->handle(Request::create('/invalid-url'));
             throw new \RuntimeException('Application in debug mode should throws NotFoundHttpException');
         } catch (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
             $this->assertTrue(true);

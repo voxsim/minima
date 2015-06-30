@@ -11,7 +11,7 @@ class DatabaseBuilder
                   'database.user' => 'root',
                   'database.password' => '',
                   'database.host' => 'localhost',
-                  'database.host' => 'pdo_mysql',
+                  'database.driver' => 'pdo_mysql',
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 
