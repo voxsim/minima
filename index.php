@@ -10,7 +10,7 @@ use Symfony\Component\Routing\RouteCollection;
 // Configuration
 $configuration = array();
 
-// Stateful Componenents
+// Stateful Components
 $dispatcher = new EventDispatcher();
 
 $database = DatabaseBuilder::getConnection();

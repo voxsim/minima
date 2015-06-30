@@ -32,7 +32,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             'security.firewalls' => array(
                 'secured' => array(
                     'pattern' => '^/account$',
-                    '_controller' => function(Request $request, Response $response, Authentication $auth) {
+                    '_controller' => function(Response $response, Authentication $auth) {
                         if (!$auth->check($request)) {
                             return $response->redirect('/login');
                         }

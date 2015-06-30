@@ -30,15 +30,19 @@ class Firewall implements EventSubscriberInterface
 
         foreach($this->firewalls as $name => $firewall) {
             if(isset($firewall['pattern']) && $firewall['pattern']->matches($request)) {
-                $firewall['request'] = $request;
+                if(isset($firewall['_controller'])) {
+                    $firewall['request'] = $request;
 
-                $controller = $this->controllerResolver->getController($firewall['_controller']);
-                $arguments = $this->controllerResolver->getArguments($controller, $firewall);
+                    $controller = $this->controllerResolver->getController($firewall['_controller']);
+                    $arguments = $this->controllerResolver->getArguments($controller, $firewall);
 
-                $response = call_user_func_array($controller, $arguments);
+                    $response = call_user_func_array($controller, $arguments);
 
-                if(null !== $response)
-                    $event->setResponse($response);
+                    if(null !== $response)
+                        $event->setResponse($response);
+                }
+
+                break;
             }
         }
     }
