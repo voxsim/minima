@@ -1,7 +1,7 @@
 <?php
 
 use Minima\Builder\LoggerBuilder;
-use Minima\Controller\ControllerResolver;
+use Minima\Controller\RequestControllerResolver;
 use Minima\Kernel\HttpKernel;
 use Minima\Http\ResponseMaker;
 use Minima\Listener\ExceptionListener;
@@ -28,7 +28,7 @@ class ApplicationFactory
         $logger = LoggerBuilder::build($configuration);
         $matcher = new UrlMatcher($routeCollection, new RequestContext());
         $router = new Router($matcher, $logger);
-        $resolver = new ControllerResolver($dispatcher);
+        $resolver = new RequestControllerResolver($dispatcher);
         $responseMaker = new ResponseMaker();
 
         if (isset($configuration['debug']) && $configuration['debug']) {

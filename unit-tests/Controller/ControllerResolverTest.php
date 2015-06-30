@@ -1,16 +1,16 @@
 <?php
 
-use Minima\Controller\ControllerResolver;
+use Minima\Controller\RequestControllerResolver;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-class ControllerResolverTest extends \PHPUnit_Framework_TestCase
+class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->request = Request::create('myrequest');
-        $this->controllerResolver = new ControllerResolver($this->dispatcher);
+        $this->controllerResolver = new RequestControllerResolver($this->dispatcher);
     }
 
   /**
