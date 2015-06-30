@@ -71,32 +71,38 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         )));
 
         $routeCollection->add('login', new Route('/login', array(
-            '_controller' => function (Request $request) {
+            '_controller' => function (Request $request, Response $response, $redirect) {
                 $username = $request->server->get('PHP_AUTH_USER', false);
                 $password = $request->server->get('PHP_AUTH_PW');
 
                 if ('Simon' === $username && 'password' === $password) {
                     $request->getSession()->set('user', array('username' => $username));
 
-                    return new RedirectResponse('/account');
+                    $redirect->setTargetUrl('/account');
+                    return $redirect;
                 }
 
-                $response = new Response();
                 $response->headers->set('WWW-Authenticate', sprintf('Basic realm="%s"', 'site_login'));
                 $response->setStatusCode(401, 'Please sign in.');
 
                 return $response;
-            }
+            },
+            'response' => new Response,
+            'redirect' => new RedirectResponse('invalid')
         )));
 
         $routeCollection->add('account', new Route('/account', array(
-            '_controller' => function (Request $request) {
+            '_controller' => function (Request $request, Response $response, $redirect) {
                 if (null === $user = $request->getSession()->get('user')) {
-                    return new RedirectResponse('/login');
+                    $redirect->setTargetUrl('/login');
+                    return $redirect;
                 }
 
-                return "Welcome {$user['username']}!";
-            }
+                $response->setContent("Welcome {$user['username']}!");
+                return $response;
+            },
+            'response' => new Response,
+            'redirect' => new RedirectResponse('invalid')
         )));
 
         return $routeCollection;
