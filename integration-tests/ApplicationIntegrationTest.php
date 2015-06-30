@@ -1,5 +1,6 @@
 <?php
 
+use Minima\Auth\Authentication;
 use Minima\Builder\TwigBuilder;
 use Minima\Http\Request;
 use Minima\Http\Response;
@@ -71,12 +72,8 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         )));
 
         $routeCollection->add('login', new Route('/login', array(
-            '_controller' => function (Request $request, Response $response) {
-                $username = $request->server->get('PHP_AUTH_USER', false);
-                $password = $request->server->get('PHP_AUTH_PW');
-
-                if ('Simon' === $username && 'password' === $password) {
-                    $request->getSession()->set('user', array('username' => $username));
+            '_controller' => function (Request $request, Response $response, Authentication $auth) {
+                if ($auth->attempt($request)) {
                     return $response->redirect('/account');
                 }
 
@@ -84,19 +81,22 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
                 $response->setStatusCode(401, 'Please sign in.');
                 return $response;
             },
-            'response' => new Response
+            'response' => new Response,
+            'auth' => new Authentication
         )));
 
         $routeCollection->add('account', new Route('/account', array(
-            '_controller' => function (Request $request, Response $response) {
-                if (null === $user = $request->getSession()->get('user')) {
+            '_controller' => function (Request $request, Response $response, Authentication $auth) {
+                if (!$auth->check($request)) {
                     return $response->redirect('/login');
                 }
 
+                $user = $request->getSession()->get('user');
                 $response->setContent("Welcome {$user['username']}!");
                 return $response;
             },
-            'response' => new Response
+            'response' => new Response,
+            'auth' => new Authentication
         )));
 
         return $routeCollection;
