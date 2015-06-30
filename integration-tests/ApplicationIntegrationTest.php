@@ -30,12 +30,9 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             'debug' => $debug,
             'twig.path' => __DIR__.'/views',
             'security.firewalls' => array(
-                'guest' => array(
-                    'pattern' => '^/login$'
-                ),
                 'secured' => array(
-                    'pattern' => '^.*$',
-                    '_controller' => function(Response $response, Authentication $auth) {
+                    'pattern' => '^/account$',
+                    '_controller' => function(Request $request, Response $response, Authentication $auth) {
                         if (!$auth->check($request)) {
                             return $response->redirect('/login');
                         }
@@ -102,10 +99,6 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
 
         $routeCollection->add('account', new Route('/account', array(
             '_controller' => function (Request $request, Response $response, Authentication $auth) {
-                        if (!$auth->check($request)) {
-                            return $response->redirect('/login');
-                        }
-                        
                 $user = $request->getSession()->get('user');
                 $response->setContent("Welcome {$user['username']}!");
                 return $response;

@@ -14,7 +14,7 @@
   <testsuites>
     <testsuite name="Minima Test Suite">
       <directory>./unit-tests/</directory>
-      <!-- directory>./integration-tests/</directory -->
+      <directory>./integration-tests/</directory>
     </testsuite>
   </testsuites>
   <filter>

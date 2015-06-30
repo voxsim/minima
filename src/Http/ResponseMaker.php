@@ -2,7 +2,7 @@
 
 namespace Minima\Http;
 
-use Symfony\Component\HttpFoundation\Response;
+use Minima\Http\Response;
 
 class ResponseMaker {
     public function create($message, $statusCode = 200) {

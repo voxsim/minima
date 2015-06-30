@@ -9,6 +9,7 @@ use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
 use Minima\Listener\StringToResponseListener;
 use Minima\Routing\Router;
+use Minima\Security\Firewall;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\EventListener\ResponseListener;
@@ -22,7 +23,8 @@ class ApplicationFactory
     {
         $defaultConfiguration = array(
                   'debug' => false,
-                  'charset' => 'UTF-8'
+                  'charset' => 'UTF-8',
+                  'security.firewalls' => array()
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 
@@ -34,24 +36,22 @@ class ApplicationFactory
         $responseMaker = new ResponseMaker();
 
         if (isset($configuration['debug']) && $configuration['debug']) {
-            return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
+            return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
         }
 
-        return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
+        return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
     }
 
-    private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker)
+    private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver)
     {
         $dispatcher->addSubscriber(new ExceptionListener($responseMaker));
 
-        return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker);
+        return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
     }
 
-    private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker)
+    private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver)
     {
-        $defaultConfiguration = array('charset' => 'UTF-8');
-        $configuration = array_merge($defaultConfiguration, $configuration);
-
+        $dispatcher->addSubscriber(new Firewall($configuration['security.firewalls'], $controllerResolver));
         $dispatcher->addSubscriber(new LogListener($logger));
         $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
         $dispatcher->addSubscriber(new StringToResponseListener($responseMaker));
