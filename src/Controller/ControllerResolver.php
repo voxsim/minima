@@ -3,7 +3,7 @@
 namespace Minima\Controller;
 
 use Minima\Event\FilterControllerEvent;
-use Symfony\Component\HttpFoundation\Request;
+use Minima\Util\Stringify;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -17,25 +17,37 @@ class ControllerResolver implements ControllerResolverInterface
         $this->dispatcher = $dispatcher;
     }
 
-    public function resolve(Request $request)
+    public function resolve($object)
     {
-        $controller = $this->getController($request);
+        try
+        {
+            $request = $object;
 
-        $event = new FilterControllerEvent($controller, $request);
-        $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
-        $controller = $event->getController();
+            $controller = $request->attributes->get('_controller');
 
-        $arguments = $this->getArguments($request, $controller);
+            if (!$controller) {
+                throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $request->getPathInfo()));
+            }
 
-        return array($controller, $arguments);
+            $controller = $this->getController($controller);
+
+            $event = new FilterControllerEvent($controller, $request);
+            $this->dispatcher->dispatch(KernelEvents::CONTROLLER, $event);
+            $controller = $event->getController();
+
+            $attributes = $request->attributes->all();
+            $attributes['request'] = $request;
+
+            $arguments = $this->getArguments($controller, $attributes);
+
+            return array($controller, $arguments);
+        } catch(ControllerNotCallableException $exception) {
+            throw new \InvalidArgumentException(sprintf('Controller "%s" for URI "%s" is not callable.', Stringify::varToString($controller), $request->getPathInfo()));
+        }
     }
 
-    private function getController(Request $request)
+    private function getController($controller)
     {
-        if (!$controller = $request->attributes->get('_controller')) {
-            throw new NotFoundHttpException(sprintf('Unable to find the controller for path "%s". The route is wrongly configured.', $request->getPathInfo()));
-        }
-
         if (is_array($controller)) {
             return $controller;
         }
@@ -45,7 +57,7 @@ class ControllerResolver implements ControllerResolverInterface
                 return $controller;
             }
 
-            throw new \InvalidArgumentException(sprintf('Controller "%s" for URI "%s" is not callable.', get_class($controller), $request->getPathInfo()));
+            throw new ControllerNotCallableException;
         }
 
         if (false === strpos($controller, ':')) {
@@ -69,13 +81,13 @@ class ControllerResolver implements ControllerResolverInterface
         $callable = array($this->instantiateController($class), $method);
 
         if (!is_callable($callable)) {
-            throw new \InvalidArgumentException(sprintf('Controller "%s" for URI "%s" is not callable.', $controller, $request->getPathInfo()));
+            throw new ControllerNotCallableException;
         }
 
         return $callable;
     }
 
-    private function getArguments(Request $request, $controller)
+    private function getArguments($controller, array $attributes)
     {
         if (is_array($controller)) {
             $r = new \ReflectionMethod($controller[0], $controller[1]);
@@ -86,12 +98,11 @@ class ControllerResolver implements ControllerResolverInterface
             $r = new \ReflectionFunction($controller);
         }
 
-        return $this->doGetArguments($request, $controller, $r->getParameters());
+        return $this->doGetArguments($controller, $attributes, $r->getParameters());
     }
 
-    protected function doGetArguments(Request $request, $controller, array $parameters)
+    protected function doGetArguments($controller, array $attributes, array $parameters)
     {
-        $attributes = $request->attributes->all();
         $arguments = array();
         foreach ($parameters as $param) {
             if (array_key_exists($param->name, $attributes)) {
