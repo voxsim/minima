@@ -43,4 +43,16 @@ class ResponsePreparerTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals('The controller must return a response (null given). Did you forget to add a return statement somewhere in your controller?', $e->getMessage());
         }
     }
+
+    public function testViewKernelEvents()
+    {
+        $viewEvent = function ($_, $event) {
+            $event->setResponse(new Response());
+        };
+
+        $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::VIEW, $this->anything())->willReturnCallBack($viewEvent);
+        $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::RESPONSE, $this->anything());
+
+        $this->responsePreparer->prepare('valid-response', new Request(), null);
+    }
 }

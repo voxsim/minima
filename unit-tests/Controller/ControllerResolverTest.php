@@ -166,6 +166,39 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->requestControllerResolver->resolve($this->request);
     }
+
+    public function testMethodWithOneDefaultParameter()
+    {
+        $controller = 'controller::methodTwo';
+
+        $controllerEvent = function ($_, $event) use ($controller) {
+            $event->setController($controller);
+        };
+
+        $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::CONTROLLER, $this->anything())->willReturnCallBack($controller);
+
+        $this->request->attributes->set('_controller', $controller);
+
+        $this->requestControllerResolver->resolve($this->request);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testMethodWithOneParameter()
+    {
+        $controller = 'controller::methodThree';
+
+        $controllerEvent = function ($_, $event) use ($controller) {
+            $event->setController($controller);
+        };
+
+        $this->dispatcher->expects($this->once())->method('dispatch')->with(KernelEvents::CONTROLLER, $this->anything())->willReturnCallBack($controller);
+
+        $this->request->attributes->set('_controller', $controller);
+
+        $this->requestControllerResolver->resolve($this->request);
+    }
 }
 
 class controller
@@ -175,6 +208,14 @@ class controller
     }
 
     public static function method()
+    {
+    }
+
+    public static function methodTwo($parameter = 'parameter')
+    {
+    }
+
+    public static function methodThree($parameter)
     {
     }
 

@@ -21,13 +21,7 @@ class ExceptionListener implements EventSubscriberInterface
     {
         $exception = $event->getException();
         $flattenException = FlattenException::create($exception);
-
-        if ($exception instanceof \Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException) {
-            $msg = 'Access Denied!';
-        } else {
-            $msg = 'Something went wrong! ('.$flattenException->getMessage().')';
-        }
-
+        $msg = 'Something went wrong! ('.$flattenException->getMessage().')';
         $event->setResponse($this->responseMaker->create($msg, $flattenException->getStatusCode()));
     }
 
