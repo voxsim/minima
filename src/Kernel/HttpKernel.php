@@ -2,7 +2,7 @@
 
 namespace Minima\Kernel;
 
-use Minima\Controller\ControllerResolverInterface;
+use Minima\Controller\RequestControllerResolver;
 use Minima\Event\FinishRequestEvent;
 use Minima\Event\GetResponseEvent;
 use Minima\Event\GetResponseForExceptionEvent;
@@ -28,7 +28,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     public function __construct(
         EventDispatcherInterface $dispatcher,
-        ControllerResolverInterface $resolver,
+        RequestControllerResolver $resolver,
         RequestStack $requestStack = null,
         RouterInterface $router = null,
         ResponsePreparerInterface $responsePreparer = null

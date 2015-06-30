@@ -2,11 +2,9 @@
 
 namespace Minima\Controller;
 
-abstract class ControllerResolver implements ControllerResolverInterface
+class ControllerResolver implements ControllerResolverInterface
 {
-    abstract public function resolve($object);
-
-    protected function getController($controller)
+    public function getController($controller)
     {
         if (is_array($controller)) {
             return $controller;
@@ -47,7 +45,7 @@ abstract class ControllerResolver implements ControllerResolverInterface
         return $callable;
     }
 
-    protected function getArguments($controller, array $attributes)
+    public function getArguments($controller, array $attributes)
     {
         if (is_array($controller)) {
             $r = new \ReflectionMethod($controller[0], $controller[1]);
@@ -61,7 +59,7 @@ abstract class ControllerResolver implements ControllerResolverInterface
         return $this->doGetArguments($controller, $attributes, $r->getParameters());
     }
 
-    protected function doGetArguments($controller, array $attributes, array $parameters)
+    private function doGetArguments($controller, array $attributes, array $parameters)
     {
         $arguments = array();
         foreach ($parameters as $param) {
@@ -87,7 +85,7 @@ abstract class ControllerResolver implements ControllerResolverInterface
         return $arguments;
     }
 
-    protected function instantiateController($class)
+    private function instantiateController($class)
     {
         return new $class();
     }

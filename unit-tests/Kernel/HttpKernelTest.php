@@ -11,7 +11,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
-        $this->resolver = $this->getMockBuilder('Minima\Controller\ControllerResolverInterface')->getMock();
+        $this->resolver = $this->getMockBuilder('Minima\Controller\RequestControllerResolver')->disableOriginalConstructor()->getMock();
         $this->requestStack = $this->getMockBuilder('Symfony\Component\HttpFoundation\RequestStack')->getMock();
         $this->router = $this->getMockBuilder('Minima\Routing\RouterInterface')->getMock();
         $this->responsePreparer = $this->getMockBuilder('Minima\Response\ResponsePreparerInterface')->getMock();

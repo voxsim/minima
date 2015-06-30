@@ -1,5 +1,6 @@
 <?php
 
+use Minima\Controller\ControllerResolver;
 use Minima\Controller\RequestControllerResolver;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -10,7 +11,8 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->request = Request::create('myrequest');
-        $this->controllerResolver = new RequestControllerResolver($this->dispatcher);
+        $this->controllerResolver = new ControllerResolver();
+        $this->requestControllerResolver = new RequestControllerResolver($this->dispatcher, $this->controllerResolver);
     }
 
   /**
@@ -18,7 +20,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
    */
   public function testNotFoundController()
   {
-      $this->controllerResolver->resolve($this->request);
+      $this->requestControllerResolver->resolve($this->request);
   }
 
   /**
@@ -28,7 +30,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
   {
       $this->request->attributes->set('_controller', array());
 
-      $this->controllerResolver->resolve($this->request);
+      $this->requestControllerResolver->resolve($this->request);
   }
 
     public function testArrayController()
@@ -43,7 +45,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
   /**
@@ -55,7 +57,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
       $this->request->attributes->set('_controller', $controller);
 
-      $this->controllerResolver->resolve($this->request);
+      $this->requestControllerResolver->resolve($this->request);
   }
 
     public function testObjectControllerCallable()
@@ -70,7 +72,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     public function testStringFunctionCallable()
@@ -85,7 +87,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     public function testStringControllerCallable()
@@ -99,7 +101,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     public function testStringControllerAndFunctionCallable()
@@ -114,7 +116,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     /**
@@ -130,7 +132,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     /**
@@ -146,7 +148,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 
     /**
@@ -162,7 +164,7 @@ class RequestControllerResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->request->attributes->set('_controller', $controller);
 
-        $this->controllerResolver->resolve($this->request);
+        $this->requestControllerResolver->resolve($this->request);
     }
 }
 

@@ -4,5 +4,7 @@ namespace Minima\Controller;
 
 interface ControllerResolverInterface
 {
-    public function resolve($object);
+    public function getController($controller);
+
+    public function getArguments($controller, array $attributes);
 }
