@@ -7,11 +7,11 @@ use Monolog\Handler\StreamHandler;
 
 class LoggerBuilder
 {
-    public static function build($configuration = array())
+    public static function build($configuration)
     {
         $defaultConfiguration = array(
                   'log.level' => 'debug',
-                  'log.file' => __DIR__.'/../../minima.log',
+                  'log.file' => $configuration['root'].'/minima.log',
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 

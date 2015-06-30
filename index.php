@@ -8,7 +8,9 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\RouteCollection;
 
 // Configuration
-$configuration = array();
+$configuration = array(
+    'root' => __DIR__,
+);
 
 // Stateful Components
 $dispatcher = new EventDispatcher();

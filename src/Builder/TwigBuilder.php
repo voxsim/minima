@@ -4,12 +4,12 @@ namespace Minima\Builder;
 
 class TwigBuilder
 {
-    public static function build($configuration = array())
+    public static function build($configuration)
     {
         $defaultConfiguration = array(
                   'debug' => false,
                   'charset' => 'UTF-8',
-                  'twig.path' => __DIR__.'/../views',
+                  'twig.path' => $configuration['root'].'/views',
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 

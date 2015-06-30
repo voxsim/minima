@@ -22,6 +22,7 @@ class ApplicationFactory
     public static function build(EventDispatcherInterface $dispatcher, RouteCollection $routeCollection, $configuration = array())
     {
         $defaultConfiguration = array(
+                  'root' => __DIR__,
                   'debug' => false,
                   'charset' => 'UTF-8',
                   'security.firewalls' => array()

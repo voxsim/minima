@@ -27,12 +27,12 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
     protected function createApplication(LoggerInterface $logger, $debug = true)
     {
         $configuration = array(
+            'root' => __DIR__,
             'debug' => $debug,
-            'twig.path' => __DIR__.'/views',
             'security.firewalls' => array(
                 'secured' => array(
                     'pattern' => '^/account$',
-                    '_controller' => function(Response $response, Authentication $auth) {
+                    '_controller' => function(Request $request, Response $response, Authentication $auth) {
                         if (!$auth->check($request)) {
                             return $response->redirect('/login');
                         }
