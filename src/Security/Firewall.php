@@ -10,6 +10,9 @@ use Symfony\Component\HttpFoundation\RequestMatcher;
 
 class Firewall implements EventSubscriberInterface
 {
+    private $controllerResolver;
+    private $firewalls;
+
     public function __construct(array $firewalls, ControllerResolverInterface $controllerResolver) {
         $this->controllerResolver = $controllerResolver;
         $this->firewalls = $firewalls;
