@@ -8,11 +8,7 @@ use Minima\Http\Response;
 use Minima\FrontendController\FrontendController;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
 abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
 {
@@ -48,28 +44,23 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         );
 
         $dispatcher = new EventDispatcher();
-        $routeCollection = $this->createRouteCollection($configuration, $this->logger);
-
-        $logger = LoggerProvider::build($configuration);
-        $requestContext = new RequestContext();
-        $matcher = new UrlMatcher($routeCollection, $requestContext);
-        $frontendController = new FrontendController($matcher, $logger);
+        $frontendController = $this->createFrontendController($configuration, $this->logger);
 
         return ApplicationFactory::build($configuration, $dispatcher, $frontendController);
     }
 
-    public function createRouteCollection(array $configuration, LoggerInterface $logger)
+    public function createFrontendController(array $configuration, LoggerInterface $logger)
     {
-        $routeCollection = new RouteCollection();
+        $frontendController = FrontendController::build($configuration, new Request());
 
-        $routeCollection->add('hello', new Route('/hello/{name}', array(
+        $frontendController->add('hello', new Route('/hello/{name}', array(
             'name' => 'world',
             '_controller' => function ($name) {
                 return 'Hello '.$name;
             }
         )));
 
-        $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
+        $frontendController->add('twig_hello', new Route('/twig_hello/{name}', array(
             'name' => 'World',
             'twig' => TwigProvider::build($configuration),
             '_controller' => function ($name, $twig) {
@@ -77,14 +68,14 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             }
         )));
 
-        $routeCollection->add('rand_hello', new Route('/rand_hello/{name}', array(
+        $frontendController->add('rand_hello', new Route('/rand_hello/{name}', array(
             'name' => 'world',
             '_controller' => function ($name) {
                 return 'Hello '.$name.' '.rand();
             }
         )));
 
-        $routeCollection->add('log_hello', new Route('/log_hello/{name}', array(
+        $frontendController->add('log_hello', new Route('/log_hello/{name}', array(
             'name' => 'world',
             'logger' => $logger,
             '_controller' => function ($name, $logger) {
@@ -92,7 +83,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             }
         )));
 
-        $routeCollection->add('login', new Route('/login', array(
+        $frontendController->add('login', new Route('/login', array(
             '_controller' => function (Request $request, Response $response, Authentication $auth) {
                 if ($auth->attempt($request)) {
                     return $response->redirect('/account');
@@ -106,7 +97,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             'auth' => new Authentication
         )));
 
-        $routeCollection->add('account', new Route('/account', array(
+        $frontendController->add('account', new Route('/account', array(
             '_controller' => function (Request $request, Response $response, Authentication $auth) {
                 $user = $request->getSession()->get('user');
                 $response->setContent("Welcome {$user['username']}!");
@@ -116,7 +107,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
             'auth' => new Authentication
         )));
 
-        return $routeCollection;
+        return $frontendController;
     }
 
     public function testRoute()
