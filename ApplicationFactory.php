@@ -8,18 +8,15 @@ use Minima\Http\ResponseMaker;
 use Minima\Listener\ExceptionListener;
 use Minima\Listener\LogListener;
 use Minima\Listener\StringToResponseListener;
-use Minima\Routing\Router;
+use Minima\Routing\RouterInterface;
 use Minima\Security\Firewall;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\EventListener\ResponseListener;
-use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
 
 class ApplicationFactory
 {
-    public static function build(EventDispatcherInterface $dispatcher, RouteCollection $routeCollection, $configuration = array())
+    public static function build(array $configuration, EventDispatcherInterface $dispatcher, RouterInterface $router)
     {
         $defaultConfiguration = array(
                   'root' => __DIR__,
@@ -29,34 +26,35 @@ class ApplicationFactory
                 );
         $configuration = array_merge($defaultConfiguration, $configuration);
 
-        $logger = LoggerBuilder::build($configuration);
-        $matcher = new UrlMatcher($routeCollection, new RequestContext());
-        $router = new Router($matcher, $logger);
-        $controllerResolver = new ControllerResolver();
-        $resolver = new RequestControllerResolver($dispatcher, $controllerResolver);
-        $responseMaker = new ResponseMaker();
+        if (isset($configuration['debug']) && $configuration['debug'])
+            return static::buildForDebug($configuration, $dispatcher, $router);
 
-        if (isset($configuration['debug']) && $configuration['debug']) {
-            return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
-        }
-
-        return static::buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
+        return static::buildForProduction($configuration, $dispatcher, $router);
     }
 
-    private static function buildForProduction($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver)
+    private static function buildForProduction($configuration, $dispatcher, $router)
     {
+        $responseMaker = new ResponseMaker();
         $dispatcher->addSubscriber(new ExceptionListener($responseMaker));
 
-        return static::buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver);
+        return static::buildForDebug($configuration, $dispatcher, $router);
     }
 
-    private static function buildForDebug($configuration, $dispatcher, $resolver, $router, $logger, $responseMaker, $controllerResolver)
+    private static function buildForDebug($configuration, $dispatcher, $router)
     {
+        $controllerResolver = new ControllerResolver();
         $dispatcher->addSubscriber(new Firewall($configuration['security.firewalls'], $controllerResolver));
+
+        $logger = LoggerBuilder::build($configuration);
         $dispatcher->addSubscriber(new LogListener($logger));
+
         $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
+
+        $responseMaker = new ResponseMaker();
         $dispatcher->addSubscriber(new StringToResponseListener($responseMaker));
 
-        return new HttpKernel($dispatcher, $resolver, new RequestStack(), $router);
+        $resolver = new RequestControllerResolver($dispatcher, $controllerResolver);
+        $requestStack = new RequestStack();
+        return new HttpKernel($dispatcher, $resolver, $requestStack, $router);
     }
 }

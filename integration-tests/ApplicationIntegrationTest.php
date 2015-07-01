@@ -1,11 +1,15 @@
 <?php
 
 use Minima\Auth\Authentication;
+use Minima\Builder\LoggerBuilder;
 use Minima\Builder\TwigBuilder;
 use Minima\Http\Request;
 use Minima\Http\Response;
+use Minima\Routing\Router;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -46,7 +50,12 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         $dispatcher = new EventDispatcher();
         $routeCollection = $this->createRouteCollection($configuration, $this->logger);
 
-        return ApplicationFactory::build($dispatcher, $routeCollection, $configuration);
+        $logger = LoggerBuilder::build($configuration);
+        $requestContext = new RequestContext();
+        $matcher = new UrlMatcher($routeCollection, $requestContext);
+        $router = new Router($matcher, $logger);
+
+        return ApplicationFactory::build($configuration, $dispatcher, $router);
     }
 
     public function createRouteCollection(array $configuration, LoggerInterface $logger)
