@@ -51,14 +51,35 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
 
     public function createFrontendController(array $configuration, LoggerInterface $logger)
     {
-        $frontendController = FrontendController::build($configuration, new Request());
+        $frontendController = FrontendController::build($configuration);
 
-        $frontendController->add('hello', new Route('/hello/{name}', array(
+        $frontendController->add('get-hello', new Route(
+          '/hello/{name}',
+          array(
             'name' => 'world',
             '_controller' => function ($name) {
                 return 'Hello '.$name;
             }
-        )));
+          ),
+          array(),
+          array(),
+          '',
+          array(),
+          array('GET')
+        ));
+
+        $frontendController->add('post-hello', new Route('/hello/{name}', array(
+            'name' => 'world',
+            '_controller' => function ($name) {
+                return 'POST Hello '.$name;
+            }
+          ),
+          array(),
+          array(),
+          '',
+          array(),
+          array('POST')
+        ));
 
         $frontendController->add('twig_hello', new Route('/twig_hello/{name}', array(
             'name' => 'World',
@@ -117,6 +138,15 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         $response = $this->application->handle($request);
 
         $this->assertEquals('Hello Simon', $response->getContent());
+    }
+
+    public function testPostRoute()
+    {
+        $request = Request::create('/hello/Simon', 'POST');
+
+        $response = $this->application->handle($request);
+
+        $this->assertEquals('POST Hello Simon', $response->getContent());
     }
 
     public function testTwig()

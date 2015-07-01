@@ -13,18 +13,18 @@ $configuration = array(
     'root' => __DIR__,
 );
 
-// Handle the request
-$request = Request::createFromGlobals();
-
 // Stateful Components
 $dispatcher = new EventDispatcher();
 $database = DatabaseProvider::getConnection();
-$frontendController = FrontendController::build($configuration, $request);
+$frontendController = FrontendController::build($configuration);
 
 // Add your routes here
 
 // Build Application
 $application = ApplicationFactory::build($configuration, $dispatcher, $frontendController);
+
+// Handle the request
+$request = Request::createFromGlobals();
 
 $response = $application->handle($request);
 $response->send();

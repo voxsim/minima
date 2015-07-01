@@ -27,6 +27,8 @@ class FrontendController extends UrlMatcher implements FrontendControllerInterfa
     public function lookup(Request $request)
     {
         try {
+            $this->context->fromRequest($request);
+
             $parameters = $this->match($request->getPathInfo());
 
             $this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], Stringify::parametersToString($parameters)));
@@ -52,10 +54,9 @@ class FrontendController extends UrlMatcher implements FrontendControllerInterfa
         $this->routes->add($name, $route);
     }
 
-    public static function build(array $configuration, Request $request) {
+    public static function build(array $configuration) {
         $logger = LoggerProvider::build($configuration);
         $requestContext = new RequestContext();
-        $requestContext->fromRequest($request);
         $routeCollection = new RouteCollection();
         return new FrontendController($routeCollection, $requestContext, $logger);
     }
