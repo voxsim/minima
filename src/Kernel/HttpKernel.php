@@ -7,8 +7,8 @@ use Minima\Event\FinishRequestEvent;
 use Minima\Event\GetResponseEvent;
 use Minima\Event\GetResponseForExceptionEvent;
 use Minima\Event\PostResponseEvent;
-use Minima\Routing\RouterInterface;
-use Minima\Routing\NullRouter;
+use Minima\FrontendController\FrontendControllerInterface;
+use Minima\FrontendController\NullFrontendController;
 use Minima\Response\ResponsePreparerInterface;
 use Minima\Response\ResponsePreparer;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -30,14 +30,14 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         EventDispatcherInterface $dispatcher,
         RequestControllerResolver $resolver,
         RequestStack $requestStack = null,
-        RouterInterface $router = null,
+        FrontendControllerInterface $frontendController = null,
         ResponsePreparerInterface $responsePreparer = null
     )
     {
         $this->dispatcher = $dispatcher;
         $this->resolver = $resolver;
         $this->requestStack = $requestStack === null ? new RequestStack() : $requestStack;
-        $this->router = $router === null ? new NullRouter() : $router;
+        $this->frontendController = $frontendController === null ? new NullFrontendController() : $frontendController;
         $this->responsePreparer = $responsePreparer === null ? new ResponsePreparer($dispatcher) : $responsePreparer;
     }
 
@@ -53,7 +53,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
                 return $this->prepareResponse($event->getResponse(), $request);
             }
 
-            $this->router->lookup($request);
+            $this->frontendController->lookup($request);
 
             list($controller, $arguments) = $this->resolver->resolve($request);
 

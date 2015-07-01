@@ -1,10 +1,10 @@
 <?php
 
-namespace Minima\Routing;
+namespace Minima\FrontendController;
 
 use Symfony\Component\HttpFoundation\Request;
 
-interface RouterInterface
+interface FrontendControllerInterface
 {
     public function lookup(Request $request);
 }

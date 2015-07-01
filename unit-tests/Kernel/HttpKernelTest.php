@@ -13,21 +13,21 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->resolver = $this->getMockBuilder('Minima\Controller\RequestControllerResolver')->disableOriginalConstructor()->getMock();
         $this->requestStack = $this->getMockBuilder('Symfony\Component\HttpFoundation\RequestStack')->getMock();
-        $this->router = $this->getMockBuilder('Minima\Routing\RouterInterface')->getMock();
+        $this->frontendController = $this->getMockBuilder('Minima\FrontendController\FrontendControllerInterface')->getMock();
         $this->responsePreparer = $this->getMockBuilder('Minima\Response\ResponsePreparerInterface')->getMock();
         $this->request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
 
         $this->controller = function () { return new Response(''); };
         $this->arguments = array();
 
-        $this->httpKernel = new HttpKernel($this->dispatcher, $this->resolver, $this->requestStack, $this->router, $this->responsePreparer);
+        $this->httpKernel = new HttpKernel($this->dispatcher, $this->resolver, $this->requestStack, $this->frontendController, $this->responsePreparer);
     }
 
     public function testHandle()
     {
         $this->requestStack->expects($this->once())->method('push');
         $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
-        $this->router->expects($this->once())->method('lookup');
+        $this->frontendController->expects($this->once())->method('lookup');
         $this->resolver->expects($this->once())->method('resolve')->willReturn(array($this->controller, $this->arguments));
         $this->responsePreparer->expects($this->once())->method('prepare');
         $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
@@ -44,7 +44,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
 
         $this->requestStack->expects($this->once())->method('push');
         $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything())->willReturnCallback($requestCallback);
-        $this->router->expects($this->never())->method('lookup');
+        $this->frontendController->expects($this->never())->method('lookup');
         $this->resolver->expects($this->never())->method('resolve');
         $this->responsePreparer->expects($this->once())->method('prepare')->willReturn(new Response('hello'));
         $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::FINISH_REQUEST, $this->anything());
@@ -92,7 +92,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
 
         $this->requestStack->expects($this->once())->method('push');
         $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
-        $this->router->expects($this->once())->method('lookup');
+        $this->frontendController->expects($this->once())->method('lookup');
         $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
         $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
         $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);
@@ -119,7 +119,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
 
         $this->requestStack->expects($this->once())->method('push');
         $this->dispatcher->expects($this->at(0))->method('dispatch')->with(KernelEvents::REQUEST, $this->anything());
-        $this->router->expects($this->once())->method('lookup');
+        $this->frontendController->expects($this->once())->method('lookup');
         $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
         $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
         $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);
@@ -146,7 +146,7 @@ class HttpKernelTest extends \PHPUnit_Framework_TestCase
         };
 
         $this->requestStack->expects($this->once())->method('push');
-        $this->router->expects($this->once())->method('lookup');
+        $this->frontendController->expects($this->once())->method('lookup');
         $this->resolver->expects($this->once())->method('resolve')->willThrowException(new \RuntimeException('foo'));
         $this->dispatcher->expects($this->at(1))->method('dispatch')->with(KernelEvents::EXCEPTION, $this->anything())->willReturnCallback($exceptionCallback);
         $this->responsePreparer->expects($this->once())->method('prepare')->willReturnCallback($responseCallback);

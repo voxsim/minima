@@ -1,6 +1,6 @@
 <?php
 
-namespace Minima\Routing;
+namespace Minima\FrontendController;
 
 use Minima\Util\Stringify;
 use Psr\Log\LoggerInterface;
@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
 
-class Router implements RouterInterface
+class FrontendController implements FrontendControllerInterface
 {
     private $matcher;
 
