@@ -1,8 +1,8 @@
 <?php
 
-namespace Minima\Builder;
+namespace Minima\Provider;
 
-class DatabaseBuilder
+class DatabaseProvider
 {
     public static function getConnection($configuration = array())
     {

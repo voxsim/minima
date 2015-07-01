@@ -2,10 +2,10 @@
 
 require_once __DIR__.'/bootstrap.php';
 
-use Minima\Builder\DatabaseBuilder;
-use Minima\Builder\LoggerBuilder;
+use Minima\Provider\DatabaseProvider;
+use Minima\Provider\LoggerProvider;
 use Minima\Http\Request;
-use Minima\Routing\Router;
+use Minima\FrontendController\FrontendController;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RequestContext;
@@ -21,7 +21,7 @@ $request = Request::createFromGlobals();
 
 // Stateful Components
 $dispatcher = new EventDispatcher();
-$database = DatabaseBuilder::getConnection();
+$database = DatabaseProvider::getConnection();
 
 // Loading routes
 $routeCollection = new RouteCollection();
@@ -29,14 +29,14 @@ $routeCollection = new RouteCollection();
 // Add your routes here
 
 // Routing
-$logger = LoggerBuilder::build($configuration);
+$logger = LoggerProvider::build($configuration);
 $requestContext = new RequestContext();
 $requestContext->fromRequest($request);
 $matcher = new UrlMatcher($routeCollection, $requestContext);
-$router = new Router($matcher, $logger);
+$frontendController = new FrontendController($matcher, $logger);
 
 // Build Application
-$application = ApplicationFactory::build($configuration, $dispatcher, $router);
+$application = ApplicationFactory::build($configuration, $dispatcher, $frontendController);
 
 $response = $application->handle($request);
 $response->send();

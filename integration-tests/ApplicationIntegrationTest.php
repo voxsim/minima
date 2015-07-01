@@ -1,8 +1,8 @@
 <?php
 
 use Minima\Auth\Authentication;
-use Minima\Builder\LoggerBuilder;
-use Minima\Builder\TwigBuilder;
+use Minima\Provider\LoggerProvider;
+use Minima\Provider\TwigProvider;
 use Minima\Http\Request;
 use Minima\Http\Response;
 use Minima\FrontendController\FrontendController;
@@ -50,7 +50,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
         $dispatcher = new EventDispatcher();
         $routeCollection = $this->createRouteCollection($configuration, $this->logger);
 
-        $logger = LoggerBuilder::build($configuration);
+        $logger = LoggerProvider::build($configuration);
         $requestContext = new RequestContext();
         $matcher = new UrlMatcher($routeCollection, $requestContext);
         $frontendController = new FrontendController($matcher, $logger);
@@ -71,7 +71,7 @@ abstract class ApplicationIntegrationTest extends \PHPUnit_Framework_TestCase
 
         $routeCollection->add('twig_hello', new Route('/twig_hello/{name}', array(
             'name' => 'World',
-            'twig' => TwigBuilder::build($configuration),
+            'twig' => TwigProvider::build($configuration),
             '_controller' => function ($name, $twig) {
                 return $twig->render('hello.twig', array('name' => $name));
             }

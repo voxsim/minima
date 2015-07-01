@@ -1,11 +1,11 @@
 <?php
 
-namespace Minima\Builder;
+namespace Minima\Provider;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 
-class LoggerBuilder
+class LoggerProvider
 {
     public static function build($configuration)
     {

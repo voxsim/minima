@@ -1,8 +1,8 @@
 <?php
 
-namespace Minima\Builder;
+namespace Minima\Provider;
 
-class TwigBuilder
+class TwigProvider
 {
     public static function build($configuration)
     {

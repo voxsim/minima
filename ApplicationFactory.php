@@ -1,6 +1,6 @@
 <?php
 
-use Minima\Builder\LoggerBuilder;
+use Minima\Provider\LoggerProvider;
 use Minima\Controller\ControllerResolver;
 use Minima\Controller\RequestControllerResolver;
 use Minima\Kernel\HttpKernel;
@@ -45,7 +45,7 @@ class ApplicationFactory
         $controllerResolver = new ControllerResolver();
         $dispatcher->addSubscriber(new Firewall($configuration['security.firewalls'], $controllerResolver));
 
-        $logger = LoggerBuilder::build($configuration);
+        $logger = LoggerProvider::build($configuration);
         $dispatcher->addSubscriber(new LogListener($logger));
 
         $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
