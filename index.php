@@ -19,7 +19,6 @@ $database = DatabaseProvider::getConnection();
 $frontendController = FrontendController::build($configuration);
 
 // Add your routes here
-
 // Build Application
 $application = ApplicationFactory::build($configuration, $dispatcher, $frontendController);
 
