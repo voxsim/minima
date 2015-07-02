@@ -2,6 +2,7 @@
 
 namespace Minima\FrontendController;
 
+use Minima\FrontendController\UrlMatcher;
 use Minima\Provider\LoggerProvider;
 use Minima\Util\Stringify;
 use Psr\Log\LoggerInterface;
@@ -13,23 +14,25 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RouteCollection;
 
-class FrontendController extends UrlMatcher implements FrontendControllerInterface
+class FrontendController implements FrontendControllerInterface
 {
-    public function __construct(RouteCollection $routes, RequestContext $requestContext, LoggerInterface $logger = null)
+    private $routes;
+    private $urlMatcher;
+    private $logger;
+
+    public function __construct(RouteCollection $routes, UrlMatcher $urlMatcher, LoggerInterface $logger)
     {
-        parent::__construct($routes, $requestContext);
-        $this->logger = $logger == null ? new NullLogger() : $logger;
+        $this->routes = $routes;
+        $this->urlMatcher = $urlMatcher;
+        $this->logger = $logger;
     }
 
     public function lookup(Request $request)
     {
         try {
-            $this->context->fromRequest($request);
-
-            $parameters = $this->match($request->getPathInfo());
+            $parameters = $this->urlMatcher->matchRequest($request, $this->routes);
 
             $this->logger->info(sprintf('Matched route "%s" (parameters: %s)', $parameters['_route'], Stringify::parametersToString($parameters)));
 
@@ -55,9 +58,9 @@ class FrontendController extends UrlMatcher implements FrontendControllerInterfa
     }
 
     public static function build(array $configuration) {
-        $logger = LoggerProvider::build($configuration);
-        $requestContext = new RequestContext();
         $routeCollection = new RouteCollection();
-        return new FrontendController($routeCollection, $requestContext, $logger);
+        $urlMatcher = new UrlMatcher();
+        $logger = LoggerProvider::build($configuration);
+        return new FrontendController($routeCollection, $urlMatcher, $logger);
     }
 }

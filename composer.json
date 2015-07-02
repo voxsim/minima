@@ -8,7 +8,9 @@
 		"symfony/http-kernel": "2.7.*",
 		"twig/twig": "^1.18",
 		"monolog/monolog": "^1.13",
-		"doctrine/dbal": "^2.5"
+		"doctrine/dbal": "^2.5",
+		"symfony/config": "^2.7",
+		"symfony/expression-language": "^2.7"
 	},
 	"autoload": {
 	      "classmap": [
