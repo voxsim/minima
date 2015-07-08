@@ -34,8 +34,7 @@ class ApplicationFactory
 
     private static function buildForProduction($configuration, $dispatcher, $frontendController)
     {
-        $responseMaker = new ResponseMaker();
-        $dispatcher->addSubscriber(new ExceptionListener($responseMaker));
+        $dispatcher->addSubscriber(new ExceptionListener());
 
         return static::buildForDebug($configuration, $dispatcher, $frontendController);
     }
@@ -49,9 +48,7 @@ class ApplicationFactory
         $dispatcher->addSubscriber(new LogListener($logger));
 
         $dispatcher->addSubscriber(new ResponseListener($configuration['charset']));
-
-        $responseMaker = new ResponseMaker();
-        $dispatcher->addSubscriber(new StringToResponseListener($responseMaker));
+        $dispatcher->addSubscriber(new StringToResponseListener());
 
         $resolver = new RequestControllerResolver($dispatcher, $controllerResolver);
         $requestStack = new RequestStack();

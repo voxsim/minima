@@ -22,7 +22,8 @@ class FrontendControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testLookup()
     {
-        $this->matcher->expects($this->once())->method('matchRequest')
+        $this->matcher->expects($this->once())
+          ->method('matchRequest')
           ->with($this->request, $this->routes)
           ->willReturn(
             array('_route' => 'path', '_controller' => 'myController', 'other' => 'value')
@@ -44,7 +45,8 @@ class FrontendControllerTest extends \PHPUnit_Framework_TestCase
     public function testResourceNotFoundException()
     {
         try {
-            $this->matcher->expects($this->once())->method('matchRequest')
+            $this->matcher->expects($this->once())
+              ->method('matchRequest')
               ->with($this->request, $this->routes)
               ->willThrowException(new ResourceNotFoundException());
 
@@ -57,7 +59,8 @@ class FrontendControllerTest extends \PHPUnit_Framework_TestCase
     public function testResourceNotFoundExceptionWithReferer()
     {
         try {
-            $this->matcher->expects($this->once())->method('matchRequest')
+            $this->matcher->expects($this->once())
+              ->method('matchRequest')
               ->with($this->request, $this->routes)
               ->willThrowException(new ResourceNotFoundException());
 
@@ -71,7 +74,8 @@ class FrontendControllerTest extends \PHPUnit_Framework_TestCase
     public function testMethodNotAllowedException()
     {
         try {
-            $this->matcher->expects($this->once())->method('matchRequest')
+            $this->matcher->expects($this->once())
+              ->method('matchRequest')
               ->with($this->request, $this->routes)
               ->willThrowException(new MethodNotAllowedException(array('POST')));
 

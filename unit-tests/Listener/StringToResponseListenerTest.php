@@ -7,29 +7,21 @@ class StringToResponseListenerTest extends \PHPUnit_Framework_TestCase
 {
     public function testOnKernelViewWhenResponseIsNotValid()
     {
-        $responseMaker = $this->getMockBuilder('Minima\Http\ResponseMaker')->disableOriginalConstructor()->getMock();
-        $listener = new StringToResponseListener($responseMaker);
+        $listener = new StringToResponseListener();
 
         $event = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent')->disableOriginalConstructor()->getMock();
 
-        $response = new Response('string-response');
-
-        $responseMaker->expects($this->once())->method('create')->willReturn($response);
-
         $event->expects($this->once())->method('getControllerResult')->willReturn('string-response');
-        $event->expects($this->once())->method('setResponse')->with($response);
+        $event->expects($this->once())->method('setResponse')->with(new ContentIsEqualTo('string-response'));
 
         $listener->onKernelView($event);
     }
 
     public function testOnKernelView()
     {
-        $responseMaker = $this->getMockBuilder('Minima\Http\ResponseMaker')->disableOriginalConstructor()->getMock();
-        $listener = new StringToResponseListener($responseMaker);
+        $listener = new StringToResponseListener();
 
         $event = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent')->disableOriginalConstructor()->getMock();
-
-        $responseMaker->expects($this->never())->method('create');
 
         $event->expects($this->once())->method('getControllerResult')->willReturn(new Response());
         $event->expects($this->never())->method('setResponse');
